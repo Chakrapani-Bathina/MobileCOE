@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<meta charset="utf-8">
+<title>Search by Number for Volvo Model</title>
+<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+
+<style>
+html,body,#map-canvas {
+	height: 90%;
+	margin: 0px;
+	padding: 5px;
+	margin-bottom: 75px;
+}
+.scrollup {
+	width:42px;
+	height:42px;			
+	text-indent:-9999px;
+	opacity:0.6;
+	position:fixed;
+	bottom:76px;
+	right:20px;
+	display:none;			
+	background: url('images/icon_top.png') no-repeat;
+}
+
+a.scrollup:link, a.scrollup:visited, a.scrollup:hover, a.scrollup:active {
+    width: 42px;
+    border: none;
+    background-color: #ddd;
+    border-radius:12px;
+    padding: 0px;
+}
+
+.pager li>a, .pager li>span {
+	
+	padding: 0px 0px;	
+	border: 0px solid #ddd;
+	border-radius: 10px;
+	margin-left:10px;
+	margin-right:10px;
+	margin-bottom: 10px;
+}
+
+.btn-custom {
+	padding: 4px 15px 6px;
+	background-color: #F0EDE5;
+	border: 2px solid #234;
+	border-radius:4px;
+	color: #234;
+}
+
+#panel {
+	position: absolute;
+	top: 55px;
+	left: 50%;
+	margin-left: -180px;
+	z-index: 5;
+	background-color: #fff;
+	padding: 5px;
+	border: 1px solid #999;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+a:link, a:visited {
+    display: block;
+    font-weight: bold;
+    color: #FFFFFF;
+    background-color: #555;
+    width: auto;
+    border: 1px solid #CCCC00;
+    border-radius:4px;
+    text-align: left;
+    padding: 4px;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+a:hover, a:active {
+    background-color: #B88A00;
+}
+
+.busNumber {
+	color: #3C8FB9;
+}
+
+.container {
+	padding-bottom:30px;
+}
+
+.loader {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url('images/loading.gif') 50% 50% no-repeat rgb(249,249,249);
+}
+
+.ajaxloader {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url('images/spinner.gif') 50% 50% no-repeat;
+}
+
+</style>
+</head>
+<body style="background: url(images/m.jpg); display: none;" >
+
+
+<a href="" class="scrollup" style="display: none;">Scroll</a>
+
+	<div class="loader"></div>
+	<div class="ajaxloader" style="display: none;"></div>
+	<div class="container">
+		<div id="headernav" >
+			<nav id="navHeader" class="navbar-fixed-top" role="navigation" style="background: url(images/m.jpg); border-bottom: 3px solid #345678; width: 100%;" >
+				<center>
+					<div style="padding-left:10px; padding-top:0px; padding-right:10px; width: 100%;"><img width="100%" style="height: 66px !important;" src="images/rtc_logo31.gif" /></div>
+				</center>
+			</nav>
+    	</div>
+	</div>
+	<div style="margin-top: 54px; padding-bottom: 10px;" id="stopsPanel">
+		<div class="input-group" style="padding-bottom: 20px; width:300px;"> <span class="input-group-addon" id="availableStops"></span>
+    		<input id="filter" type="text" class="form-control" placeholder="type here ...">
+		</div>
+		<div class="table">
+			<table class="table table-bordered">
+			    <tbody class="searchable" id="stopsList">
+					<tr class='busNumber' id='8X'><td>8X</td></tr>
+					<tr class='busNumber' id='10H'><td>10H</td></tr>
+					<tr class='busNumber' id='10H/17H'><td>10H/17H</td></tr>
+					<tr class='busNumber' id='10H/W'><td>10H/W</td></tr>
+					<tr class='busNumber' id='17H'><td>17H</td></tr>
+					<tr class='busNumber' id='17H/10H'><td>17H/10H</td></tr>
+					<tr class='busNumber' id='113M/K'><td>113M/K</td></tr>
+					<tr class='busNumber' id='113M/W'><td>113M/W</td></tr>
+					<tr class='busNumber' id='147'><td>147</td></tr>
+					<tr class='busNumber' id='216L/W'><td>216L/W</td></tr>
+					<tr class='busNumber' id='218L'><td>218L</td></tr>
+					<tr class='busNumber' id='222A'><td>222A</td></tr>
+
+			    </tbody>
+			</table>
+		</div>
+	  	<div style="padding-bottom:40px;"></div>		
+	</div>	
+
+	<div id="map-canvas" style="display: none; padding-bottom: 60px; padding-top: 45px;"></div>
+	
+	<div id='stopDetails' style="display: none; padding-bottom: 70px; padding-top:45px;"></div> 		
+		
+	<div id="myModal" class="modal fade">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	                <h4 class="modal-title"><span id="stopInfo" style='color: #ffc4f4;'></span></h4>
+	            </div>
+	            <div class="modal-body" id="tableData"></div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-default" data-dismiss="modal" id="close"></button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+	<div style="background: url(images/m.jpg);" >
+		<nav id="navFooter" class="navbar-fixed-bottom" role="navigation" style="border-top: 3px solid #345678; background: url(images/m.jpg); float: left;" >
+			<ul class="pager" style="float: left; margin: 8px 0px 10px;">
+			  	<li><a href="index.html" ><span class="glyphicon glyphicon-home btn-custom" id="home">&nbsp;Home</span></a></li>
+			</ul>
+		</nav>
+	</div>
+
+	<script src="js/cordova.js"></script>
+	<script src="js/UrlPlugin.js"> </script>
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script type="text/javascript" src="js/bootstrap.min.js"></script>
+	<script src="js/resources.default.js"> </script>
+	<script src="js/resources.en.js"> </script>
+	
+	<script>
+	var languageCode;
+	var globalURL;
+	var startid;
+	var endid;
+	var backButtonLevel = 1;
+
+	$(document).ready(function() {
+	
+		$(window).scroll(function(){
+			if ($(this).scrollTop() > 100) {
+				$('.scrollup').fadeIn();
+			} else {
+				$('.scrollup').fadeOut();
+			}
+		}); 
+		
+		$('.scrollup').click(function(){
+			$("html, body").animate({ scrollTop: 0 }, 600);
+			return false;
+		}); 
+	
+		console.log("doc ready");
+		$(window).load(function() {
+			$(".loader").fadeOut("slow");
+		});
+	
+		$('#filter').focus(function () {
+			$("#navHeader").slideToggle("slow");
+			$("#navFooter").slideToggle("slow");
+			document.getElementById("stopsPanel").style.marginTop = "-20px";
+		});
+		
+		$('#filter').blur(function () {
+			$("#navHeader").slideToggle("slow");
+			$("#navFooter").slideToggle("slow");
+			document.getElementById("stopsPanel").style.marginTop = "65px";
+		});
+		
+		$('#filter').keyup(function () {
+			var localLanguageCode = localStorage["languageCode"];
+			var thisValue = $(this).val();
+			if(thisValue != null) {
+				thisValue = thisValue.toLowerCase();
+			}
+			//alert("thisValue::"+thisValue+":");
+            var rex = new RegExp(thisValue);
+            
+            $('.searchable tr').hide();
+            $('.searchable tr').filter(function () {
+                var textVal = $(this).text().trim().toLowerCase();
+                return rex.test(textVal);
+            }).show();
+        });
+		
+		$("#stopsList").on('click', '.busNumber', function(e) {
+		    	
+			e.preventDefault();
+            var textVal = $(this).text().trim();
+			var ids = $(this).attr('id');
+          	//alert('selected ids : '+ids);
+          	//alert('selected Route : '+textVal);
+            $('.scrollup').fadeOut();
+
+			var flag = true;
+			flag = 	checkConnection();
+			
+			if(flag == false) {
+				navigator.notification.alert(
+				    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+				    closeActivity,         				// callback
+				    'No network connection',            // title
+				    'OK'                  				// buttonName
+				);
+			} else {
+	        	if(textVal != null) {
+		            $.ajax({
+		            	type: "GET", 
+		                url: globalURL+'query='+ids+',0,145&flag=8',
+		                beforeSend: function () { 
+		                	$(".ajaxloader").show();
+		                },
+		        		complete: function () { 
+		        			$(".ajaxloader").hide();
+		        			backButtonLevel = 2; 
+		        		},
+		                success: function(showdata) { 
+	
+	   						$('#map-canvas').html("");
+						    $("#map-canvas").show();
+						    $("#stopDetails").html(""); 
+						    $("#stopDetails").hide(); 
+	    					$("#stopsPanel").hide();
+	    					
+	    					if(showdata != null && showdata != 'undefined' && showdata.indexOf("No records") != -1) {
+	    						$('#map-canvas').append(MyApp.resources.norecords);	
+	    					} else {
+		    					var sendingdate = showdata.split(";");
+		    					var routeArray = [];
+		    					//alert("sendingdate : "+sendingdate);
+		    					var details = '<div id="srcRouteId" style="margin-bottom: 55px;"><ul class="stopsPanel"><ul class="pager"><li style="float: right;"><a><span class="glyphicon glyphicon-arrow-left btn-custom" id="showback">&nbsp;'+MyApp.resources.back+'</span></a></li></ul><center><h4>'+MyApp.resources.availableroutes+' '+textVal+'</h4></center>';
+		    					for (var i in sendingdate) {
+		    						var kk = sendingdate[i];
+		    						var id = sendingdate[i].split(',')[0];
+		    						console.log("sendingdate[i].split(',')[1] : "+sendingdate[i].split(',')[1]);
+		    						var routeDetails = sendingdate[i].split(',')[1].toLowerCase();
+		    						var routeContent = routeDetails;
+		    						routeArray = routeDetails.split(" to ");
+		    						if(routeArray != null && routeArray.length > 1) {
+		    							routeContent = convertDataToLocalValue(routeArray[0]) +" TO "+ convertDataToLocalValue(routeArray[1]);
+		    						} else {
+		    							routeContent = convertDataToLocalValue(routeArray[0]);
+		    						}
+		    						details += '<li><a href="#" id='+id+' class="findstops" style="padding-left: 5px;">'+routeContent+'</a></li>';
+		    						i++;
+		    					}
+		    					details += '</ul></div>';
+		    					$('#map-canvas').append(details); 	
+		    					
+		    					$("#showback").click(function() {
+						    		$("#stopsPanel").show();
+						    		$("#map-canvas").hide(); 
+								});
+	    					}
+	    				},                                         
+		          		error: function (xhr, status) {  
+		          		}
+		            });    			
+	        	}
+	        }
+	    });
+
+		$('#map-canvas').on('click', '.findstops', function(e) {
+		    $('#stopDetails').html("");
+			e.preventDefault();
+			var id = $(this).attr('id');
+			var stopsnearme = $(this).text();
+			var flag = true;
+			flag = 	checkConnection();
+			
+			if(flag == false) {
+				navigator.notification.alert(
+				    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+				    closeActivity,         				// callback
+				    'No network connection',            // title
+				    'OK'                  				// buttonName
+				);
+			} else {
+	            $.ajax({
+	            	type: "GET", 
+	                url: globalURL+"query="+id+",0,145&flag=4",
+	                beforeSend: function () { 
+						$("#map-canvas").css("display","none");
+						$("#stopDetails").css("display","block");
+						
+	                	$(".ajaxloader").show();
+	                },
+	        		complete: function () { 
+	        			$(".ajaxloader").hide();
+	        			backButtonLevel = 3; 
+	        		},
+	                success: function(showdata) { 
+				
+						var sendingdate = showdata.split(";");
+						var details = '<div id="stopsRouteId"><ul class="stopDetails"><ul class="pager"><li style="float: right;"><a><span class="glyphicon glyphicon-arrow-left btn-custom" id="show">&nbsp;'+MyApp.resources.back+'</span></a></li></ul><center><h4>'+MyApp.resources.stopsintheselectedroute+' '+stopsnearme+'</h4></center>';
+						var count = sendingdate.length;
+						
+						for (var i in sendingdate) {
+							var kk = sendingdate[i];
+							var ids = sendingdate[i].split(',')[0];
+							var routeid = sendingdate[i].split(',')[4];
+							var locationData = sendingdate[i].split(',')[1]+","+sendingdate[i].split(',')[2];
+							details += '<li id="lid"><a href="#" stopid='+ids+' routedid='+routeid+' latlong = '+locationData+' class="getStop" style="text-align: center;">'+convertDataToLocalValue(sendingdate[i].split(',')[3])+'</a></li>';
+							i++;
+							if(i < count) {
+								details += '<center>&#9660</center>';
+							}						
+						}
+						details += '</ul></div>';
+					    $('#stopDetails').html("");
+					    $("#stopDetails").show();
+						$('#stopDetails').append(details);					
+						
+						$("#map-canvas").css("display","none");
+						$("#stopDetails").css("display","block");
+						
+						$("#show").click(function() {
+						    $("#map-canvas").show();
+						    $("#stopDetails").hide(); 
+						});
+					},
+	          		error: function (xhr, status) {  
+	          		}
+	            });
+			}
+		});
+	
+		$('#stopDetails').on('click', '.getStop', function(e) {
+			    
+			e.preventDefault();
+			var stopid = $(this).attr('stopid');
+			var routeid = $(this).attr('routedid');
+			var stopdetailsshow = $(this).text();
+			var flag = true;
+			flag = 	checkConnection();
+			
+			if(flag == false) {
+				navigator.notification.alert(
+				    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+				    closeActivity,         				// callback
+				    'No network connection',            // title
+				    'OK'                  				// buttonName
+				);
+			} else {
+	            $.ajax({
+	            	type: "GET", 
+	                url: globalURL+"query="+routeid+","+stopid+",0,145&flag=5",
+	                beforeSend: function () { 
+	                	$(".ajaxloader").show();
+	                },
+	        		complete: function () { 
+	        			$(".ajaxloader").hide(); 
+	        		},
+	                success: function(showdata) { 
+						var sendingdate = showdata.split(";");
+						var details = '<ul class="routestopDetails">';
+						for (var i in sendingdate) {
+							var kk = sendingdate[i];
+							var busregno = sendingdate[i].split(',')[0];							
+							var routeno = sendingdate[i].split(',')[1];							
+							var destination = sendingdate[i].split(',')[2];							
+							var eta = sendingdate[i].split(',')[3];
+							
+							details += "<div class='table' style='border-radius: 0.46em'><table class='table table-striped table-bordered' align='center'><tr><td style='background-color: #ffc4f4;'>"+MyApp.resources.busStop+"</td><td style='background-color: #ffc4f4;'>"+sendingdate[i].split(',')[0]+"</td></tr><tr><td>"+MyApp.resources.route+"</td><td>"+sendingdate[i].split(',')[1]+"</td></tr><tr><td>"+MyApp.resources.destination+"</td><td>"+convertDataToLocalValue(sendingdate[i].split(',')[2])+"</td></tr><tr><td>"+MyApp.resources.Time+"</td><td>"+sendingdate[i].split(',')[3]+"</td></tr></table></div>";
+							i++;
+						}
+						
+						details += '</ul>';
+						if(showdata != null && showdata != 'undefined' && showdata.indexOf("No records") != -1) {
+							$('#tableData').html(MyApp.resources.norecords);
+						} else {
+							$('#tableData').html(details);
+						}
+						document.getElementById('stopInfo').innerHTML = MyApp.resources.routedetails + " : " + stopdetailsshow;
+		    			$("#myModal").modal('show');
+	          		}, 
+	          		error: function (xhr, status) {  
+	          		}
+	            });
+	    	}            
+		});
+
+		languageCode = localStorage["languageCode"];
+		if(languageCode == "1") {
+	   		includeJS("js/resources.en.js");
+	    	$.extend(MyApp.resources, localizedResources);
+		} else if(languageCode == "2") {
+	   		includeJS("js/resources.hi.js");
+	    	$.extend(MyApp.resources, localizedResources);
+	    } else if(languageCode == "3") {
+	   		includeJS("js/resources.te.js");
+	    	$.extend(MyApp.resources, localizedResources);
+		}
+		
+    	document.getElementById('availableStops').innerHTML = MyApp.resources.busNumber+' &nbsp;<i class="glyphicon glyphicon-filter"></i>';    
+    	document.getElementById('stopInfo').innerHTML = MyApp.resources.routedetails;	    	  
+		document.getElementById('home').innerHTML = "&nbsp;"+MyApp.resources.home;   
+		document.getElementById('close').innerHTML = MyApp.resources.close;
+		$('#filter').attr('placeholder', MyApp.resources.typeHere);
+   	});
+
+	document.addEventListener("deviceready", onDeviceReady, false);
+	
+	function onDeviceReady() {
+		console.log("onDeviceReady");
+		UrlPlugin.prototype.send( function (result) { 
+			globalURL = result;
+		}, function (e) {
+			alert('Message Failed:' + e);
+		});
+		document.addEventListener("backbutton", doBack, false);
+		var flag = true;
+		flag = 	checkConnection();
+		
+		if(flag == false) {
+			navigator.notification.alert(
+			    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+			    closeActivity,         				// callback
+			    'No network connection',            // title
+			    'OK'                  				// buttonName
+			);
+		} else {
+			document.getElementsByTagName("body")[0].style.display = "block";
+		}
+	}
+	
+	function closeActivity() {
+		navigator.app.exitApp();
+	}
+
+	function doBack() {
+        switch(backButtonLevel) {
+	        case 1 : document.location = "index.html"; break;
+	        case 2 : $("#stopsPanel").show(); $("#map-canvas").hide(); backButtonLevel = 1; break;
+	        case 3 : $("#map-canvas").show(); $("#stopDetails").hide(); backButtonLevel = 2; break;
+	        default  : break;
+		}
+	}
+	
+	function checkConnection() {
+	    var networkState = navigator.network.connection.type;
+	    var booldata = true;
+	
+	    if(networkState == Connection.NONE || networkState == Connection.UNKNOWN) {
+	    	booldata = false;
+	    }
+	    return booldata;
+	}
+
+	function includeJS(jsFile) {
+	    $('head').append($('<script>').attr('type', 'text/javascript').attr('src', jsFile));
+	}
+
+</script>
+	
+</body>
+</html>

@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<meta charset="utf-8">
+<title>Search by Stop</title>
+<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+
+<style>
+html,body {
+	height: 90%;
+	margin: 0px;
+	padding: 5px;
+	margin-bottom: 75px;
+}
+
+.scrollup {
+	width:42px;
+	height:42px;			
+	text-indent:-9999px;
+	opacity:0.6;
+	position:fixed;
+	bottom:76px;
+	right:20px;
+	display:none;			
+	background: url('images/icon_top.png') no-repeat;
+}
+
+a.scrollup:link, a.scrollup:visited, a.scrollup:hover, a.scrollup:active {
+    width: 42px;
+    border: none;
+    background-color: #ddd;
+    border-radius:12px;
+    padding: 0px;
+}
+
+.pager li>a, .pager li>span {
+	
+	padding: 0px 0px;	
+	border: 0px solid #ddd;
+	border-radius: 10px;
+	margin-left:10px;
+	margin-right:10px;
+}
+
+.pager {
+	margin: 8px 0px 10px;
+}
+
+.btn-custom {
+	padding: 4px 15px 6px;
+	background-color: #F0EDE5;
+	border: 2px solid #234;
+	border-radius:4px;
+	color: #234;
+}
+
+#panel {
+	position: absolute;
+	top: 55px;
+	left: 50%;
+	margin-left: -180px;
+	z-index: 5;
+	background-color: #fff;
+	padding: 5px;
+	border: 1px solid #999;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+a:link, a:visited {
+    display: block;
+    font-weight: bold;
+    color: #FFFFFF;
+    background-color: #555;
+    width: auto;
+    border: 1px solid #CCCC00;
+    border-radius:4px;
+    text-align: left;
+    padding: 4px;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+a:hover, a:active {
+    background-color: #B88A00;
+}
+
+.stopName {
+	color: #3C8FB9;
+}
+
+.container {
+	padding-bottom:30px;
+}
+
+.loader {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url('images/loading.gif') 50% 50% no-repeat rgb(249,249,249);
+}
+
+.ajaxloader {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url('images/spinner.gif') 50% 50% no-repeat;
+}
+
+</style>
+</head>
+<body style="background: url(images/m.jpg); display: none;" >
+
+<a href="" class="scrollup" style="display: none;">Scroll</a>
+
+	<div class="loader"></div>
+	<div class="ajaxloader" style="display: none;"></div>
+	<div class="container">
+		<div id="headernav" >
+			<nav id="navHeader" class="navbar-fixed-top" role="navigation" style="background: url(images/m.jpg); border-bottom: 3px solid #345678; width: 100%;" >
+				<center>
+					<div style="padding-left:10px; padding-top:0px; padding-right:10px; width: 100%;"><img width="100%" style="height: 66px !important;" src="images/rtc_logo31.gif" /></div>
+				</center>
+			</nav>
+    	</div>
+	</div>
+	<div style="margin-top: 54px; padding-bottom: 10px;" id="stopsPanel">
+		<div class="input-group" style="padding-bottom: 20px;  width:300px;">
+			<span class="input-group-addon" id="availableStops"></span>
+    		<input id="filter" type="text" class="form-control" placeholder="type here ...">
+		</div>
+		<div style="padding-top:0px;"></div>
+		<div class="table">
+			<table class="table table-bordered">
+			    <tbody class="searchable" id="stopsList"></tbody>
+			</table>
+		</div>
+	  	<div style="padding-bottom:40px;"></div>		
+	</div>	
+
+	<div id="myModal" class="modal fade">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	                <h4 class="modal-title"><span id="stopInfo" style='color: #ffc4f4;'></span></h4>
+	            </div>
+	            <div class="modal-body" id="tableData"></div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-default" data-dismiss="modal" id="close"></button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+	<div style="background: url(images/m.jpg);" >
+		<nav id="navFooter" class="navbar navbar-fixed-bottom" role="navigation" style="border-top: 3px solid #345678; background: url(images/m.jpg); float: left;" >
+			<ul class="pager" style="float: left;">
+			  	<li><a href="index.html" ><span class="glyphicon glyphicon-home btn-custom" id="home">&nbsp;Home</span></a></li>
+			</ul>
+		</nav>
+	</div>
+
+	<script src="js/cordova.js"></script>
+	<script src="js/UrlPlugin.js"> </script>
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script type="text/javascript" src="js/bootstrap.min.js"></script>
+	<script src="js/resources.default.js"> </script>
+	<script src="js/resources.en.js"> </script>
+	
+	<script>
+	var languageCode;
+	var globalURL;
+
+	$(document).ready(function() {
+		$(window).scroll(function(){
+			if ($(this).scrollTop() > 100) {
+				$('.scrollup').fadeIn();
+			} else {
+				$('.scrollup').fadeOut();
+			}
+		}); 
+
+		$('.scrollup').click(function(){
+			$("html, body").animate({ scrollTop: 0 }, 600);
+			return false;
+		});
+
+		console.log("doc ready");
+		$(window).load(function() {
+			$(".loader").fadeOut("slow");
+		});
+	
+		$('#filter').focus(function () {
+			$("#navHeader").slideToggle("fast");
+			$("#navFooter").slideToggle("fast");
+			document.getElementById("stopsPanel").style.marginTop = "-20px";
+		});
+		
+		$('#filter').blur(function () {
+			$("#navHeader").slideToggle("slow");
+			$("#navFooter").slideToggle("slow");
+			document.getElementById("stopsPanel").style.marginTop = "65px";
+		});
+		
+		$('#filter').keyup(function () {
+			var localLanguageCode = localStorage["languageCode"];
+			var thisValue = $(this).val();
+			if(thisValue != null) {
+				thisValue = thisValue.toLowerCase();
+			}
+			//alert("thisValue::"+thisValue+":");
+            var rex = new RegExp(thisValue);
+            
+            $('.searchable tr').hide();
+            $('.searchable tr').filter(function () {
+                var textVal = $(this).text().trim();
+                //alert(localLanguageCode+':text::'+textVal+":");
+                if(localLanguageCode == "2") {                
+	                switch(textVal) {
+				        case '6 नंबर' : textVal = "6 NUMBER"; break;
+						case 'अबिड्स  ज़ीपीओ' : textVal = "ABIDS GPO"; break;
+						case 'अबिड्स ग्रामर स्कूल' : textVal = "ABIDS GRAMMER SCHOOL"; break;
+						case 'ए जी ऑफिस' : textVal = "AG OFFICE"; break;
+						case 'अलुगडडा बवी' : textVal = "ALAGADDA BAAVI"; break;
+						case 'अलिंद' : textVal = "ALIND"; break;
+						case 'अल्ल्वीन क्रॉस रोड' : textVal = "ALLWYN X ROAD"; break;
+						case 'अम्बरपेट' : textVal = "AMBERPET"; break;
+						case 'अम्बरपेट गांधी स्टेचू' : textVal = "AMBERPET GANDHI STATUE"; break;
+						case 'अमीरपेट' : textVal = "AMEERPET"; break;
+						case 'आनंद थिएटर' : textVal = "ANAND THEATER"; break;
+						case 'आंध्रज्योति' : textVal = "ANDHRAJYOTHI"; break;
+						case 'अन्जैः नगर' : textVal = "ANJAIAH NAGAR"; break;
+						case 'अन्नपूर्णा' : textVal = "ANNAPURNA"; break;
+						case 'अन्नपूर्णा होटल' : textVal = "ANNAPURNA HOTEL"; break;
+						case 'अशोक नगर' : textVal = "ASHOK NAGAR"; break;
+						case 'असेंबली/एयर' : textVal = "ASSEMBLY/AIR"; break;
+						case 'बाघ लिंगमपल्ली' : textVal = "BAGHLINGAMPALLY"; break;
+						case 'बरकतपुरा' : textVal = "BARKATHAPURA"; break;
+						case 'बाटा' : textVal = "BATA"; break;
+						case 'बेगमपेट पब्लिक स्कूल' : textVal = "BEGUMPET PUBLIC SCHOOL"; break;
+						case 'भारतनगर' : textVal = "BHARAT NAGAR"; break;
+						case 'बी एच इ एल' : textVal = "BHEL"; break;
+						case 'बी जे आर  कॉलेज' : textVal = "BJR COLLEGE"; break;
+						case 'बोदुप्पल X रोड' : textVal = "BODUPPAL X ROAD"; break;
+						case 'बृन्दावन कॉलोनी' : textVal = "BRINDAVAN COLONY"; break;
+						case 'कैपजमिनी' : textVal = "CAPGEMINI"; break;
+						case 'कार्बाइड' : textVal = "CARBIDE"; break;
+						case 'केयर हॉस्पिटल' : textVal = "CARE HOSPITAL"; break;
+						case 'सेंट्रलबैंक' : textVal = "CENTRAL BANK"; break;
+						case 'चदरघाट' : textVal = "CHADERGHAT"; break;
+						case 'चंदनगर' : textVal = "CHANDA NAGAR"; break;
+						case 'चेरमस' : textVal = "CHERMAS"; break;
+						case 'चिलकलगुड़ा' : textVal = "CHILKALGUDA"; break;
+						case 'चिरक स्कूल' : textVal = "CHIREC SCHOOL"; break;
+						case 'चर्च' : textVal = "CHURCH"; break;
+						case 'क्लॉक टावर' : textVal = "CLOCK TOWER"; break;
+					    case 'कॉन्टिनेंटल हॉस्पिटल' : textVal = "CONTINENTAL HOSPITAL"; break;
+						case 'सी आर फाउंडेशन' : textVal = "CR FOUNDATION"; break;
+						case 'दर्गा' : textVal = "DARGA"; break;
+						case 'दीपतिश्रीनगर/मदिनगुडा' : textVal = "DEEPTHISRI NAGAR/ MADINAGUDA"; break;
+						case 'दिलसुखनगर' : textVal = "DILSUKH NAGAR"; break;
+						case 'दिलसुख नगर डिपो' : textVal = "DILSUKH NAGAR DEPOT"; break;
+						case 'इ सी आई एल क्रॉस रोड' : textVal = "ECIL X ROAD"; break;
+						case 'एर्रगाद्दा' : textVal = "ERRAGADDA"; break;
+						case 'एर्रमंज़िल' : textVal = "ERRAMANZIL"; break;
+						case 'ई एस अइ हॉस्पिटल' : textVal = "ESI HOSPITAL"; break;
+						case 'फीवर हॉस्पिटल' : textVal = "FEVER HOSPITAL"; break;
+						case 'फाइनेंसियल डिस्ट्रिक्ट' : textVal = "FINANCIAL DISTRICT"; break;
+						case 'गच्चीबौली पुष्पक' : textVal = "GACHIBOWLI PUSHPAK"; break;
+						case 'गच्चीबौली X रोड' : textVal = "GACHIBOWLI X ROAD"; break;
+						case 'गंगाराम' : textVal = "GANGARAM"; break;
+						case 'ग्रीन लैंड्स' : textVal = "GREENLANDS"; break;
+						case 'गुलमोहर पार्क' : textVal = "GULMOHAR PARK"; break;
+						case 'एच बी प्लेग्राउंड' : textVal = "H B PLAY GROUND"; break;
+						case 'हफीज्पेट' : textVal = "HAFEEZPET"; break;
+						case 'एच सी यू डिपो' : textVal = "HCU DEPOT"; break;
+						case 'एच सी यू गेट' : textVal = "HCU MAIN GATE"; break;
+						case 'हिमायत नगर' : textVal = "HIMAYAT NAGAR"; break;
+						case 'हैटेक सिटी' : textVal = "HITECH CITY"; break;
+						case 'हैटेक सिटी/शिल्परमम' : textVal = "HITECH SHILPARAMAM"; break;
+						case 'हैटेक्स कमान' : textVal = "HITEX KAMAN"; break;
+						case 'हनीवेल' : textVal = "HONEYWELL"; break;
+						case 'हैदरनगर' : textVal = "HYDERNAGAR"; break;
+						case 'आईसीआईसीआई' : textVal = "ICICI"; break;
+						case 'इक्रिसट' : textVal = "ICRISAT"; break;
+						case 'आई आई आई टी' : textVal = "IIIT"; break;
+						case 'इंदिरा नगर' : textVal = "INDIRA NAGAR"; break;
+						case 'इंडस्ट्रियल एस्टेट' : textVal = "INDUSTRIAL ESTATE"; break;
+						case 'इनफ़ोसिस' : textVal = "INFOSYS"; break;
+						case 'इंफोटेच' : textVal = "INFOTECH"; break;
+						case 'ईरानी होटल' : textVal = "IRANI HOTEL"; break;
+						case 'जेम्स स्ट्रीट' : textVal = "JAMES STREET"; break;
+						case 'ज्ञॆ .ऐन.टी.यु' : textVal = "JNTU"; break;
+						case 'जुबिली हिल्स चेकपोस्ट' : textVal = "JUBILEE HILLS CHECKPOST"; break;
+						case 'जूनियर कॉलेज' : textVal = "JUNIOR COLLEGE"; break;
+						case 'ज्योति नगर' : textVal = "JYOTHI NAGAR"; break;
+						case 'काचिगुडा X रोड' : textVal = "KACHIGUDA X ROAD"; break;
+						case 'कल्याण नगर' : textVal = "KALYAN NAGAR"; break;
+						case 'कमला नगर' : textVal = "KAMALA NAGAR"; break;
+						case 'कीर्तिमहल' : textVal = "KEERTHI MAHAL"; break;
+						case 'खैरताबाद' : textVal = "KHAIRATABAD"; break;
+						case 'खैरताबाद आर टी ओ ऑफिस' : textVal = "KHAIRATABAD RTO OFFICE"; break;
+						case 'खाजगुडा X रोड' : textVal = "KHAJAGUDA X ROAD"; break;
+						case 'कोंडापुर' : textVal = "KONDAPUR"; break;
+						case 'कोठा गुदा' : textVal = "KOTHAGUDA"; break;
+						case 'कोठा गुदा क्रॉस रोड' : textVal = "KOTHAGUDA X ROAD"; break;
+						case 'कोटि' : textVal = "KOTI"; break;
+						case 'कोटि मैटरनिटी हॉस्पिटल' : textVal = "KOTI MATERNITY HOSPITAL"; break;
+						case 'कोटि विमेंस कॉलेज' : textVal = "KOTI WOMENS COLLEGE"; break;
+						case 'के पी एच बी मैन रोड' : textVal = "KPHB MAIN ROAD "; break;
+						case 'कृष्णा कंठ पार्क' : textVal = "KRISHNA KANTH PARK"; break;
+						case 'कृष्णानगर' : textVal = "KRISHNA NAGAR"; break;
+						case 'कुकटपल्ली' : textVal = "KUKATPALLY"; break;
+						case 'लकड़ीकपूल' : textVal = "LAKDIKAPOOL"; break;
+						case 'लाला पेट' : textVal = "LALAPET"; break;
+						case 'लालबंगला' : textVal = "LALBUNGALOW"; break;
+						case 'लक्ष्मीनगर' : textVal = "LAXMI NAGAR"; break;
+					    case 'लिबर्टी' : textVal = "LIBERTY"; break;
+						case 'लिड कैप' : textVal = "LIDCAP"; break;
+						case 'एल ऑय जी' : textVal = "LIG"; break;
+						case 'लिंगमपल्ली' : textVal = "LINGAMPALLY "; break;
+						case 'लिंगमपल्ली रेलवेस्टेशन' : textVal = "LINGAMPALLY RAILWAY STATION"; break;
+						case 'एल वि प्रसाद' : textVal = "LV PRASAD"; break;
+						case 'माधापुरी इमेज हॉस्पिटल' : textVal = "MADHAPUR IMAGE HOSPITAL"; break;
+						case 'माधापुर पेट्रोल बंक' : textVal = "MADHAPUR PETROL BUNK"; break;
+						case 'माधापुरपिअस' : textVal = "MADHAPUR PS"; break;
+						case 'माधापुरनिफ्ट' : textVal = "MADHAPUR NIFT"; break;
+						case 'महावीर हॉस्पिटल' : textVal = "MAHAVIR HOSPITAL"; break;
+						case 'महावीर हॉस्पिटल ज्ञॆ .ऐन.टी.यु' : textVal = "MAHAVIR HOSPITAL JNTU"; break;
+						case 'मलकपेट गंज' : textVal = "MALAKPET GUNJ"; break;
+						case 'मलकपेट सुपर बाजार' : textVal = "MALAKPET SUPER BAZAAR"; break;
+						case 'मंडल ऑफिस' : textVal = "MANDAL OFFICE"; break;
+						case 'मसब टैंक' : textVal = "MASAB TANK"; break;
+						case 'मस्जिद बाँदा' : textVal = "MASJID BANDA"; break;
+						case 'मस्जिद बाँदा विलेज' : textVal = "MASJID BANDA VILLAGE"; break;
+						case 'मेडिकल कॉलेज' : textVal = "MEDICAL COLLEGE"; break;
+						case 'मेहदीपट्नम' : textVal = "MEHDIPATNAM"; break;
+						case 'मेट्टु गुदा' : textVal = "METTUGUDA"; break;
+						case 'एम जी बी एस' : textVal = "MGBS"; break;
+						case 'मिनेर्वा' : textVal = "MINERVA"; break;
+						case 'मियांपुर' : textVal = "MIYAPUR"; break;
+						case 'मियांपुर बस डिपो' : textVal = "MIYAPUR BUSDEPO"; break;
+						case 'मियांपुर बस डिपो' : textVal = "MIYAPUR CROSS ROAD"; break;
+						case 'मियांपुर २ बुस्देपोत' : textVal = "MIYAPUR2 BUSDEPOT"; break;
+						case 'मॉडर्न बेकरी' : textVal = "MODERN BAKERY"; break;
+						case 'मूसापेट' : textVal = "MOOSAPET"; break;
+						case 'मूषराम बाघ' : textVal = "MOOSHARAMBAGH"; break;
+						case 'मौलाली उननि डिस्पेंसरी' : textVal = "MOULALI UNANI DISPENSARY"; break;
+						case 'एम यस आर डी २' : textVal = "MSRD2"; break;
+						case 'मीठड़ी वनम' : textVal = "MYTHRIVANAM"; break;
+						case 'नलगोंडा क्रॉस रोड' : textVal = "NALGONDA X ROAD"; break;
+						case 'नामपल्ली पब्लिक गार्डन' : textVal = "NAMPALLY PUBLIC GARDEN"; break;
+						case 'ननल नगर' : textVal = "NANAL NAGAR"; break;
+						case 'नारायण गुदा' : textVal = "NARAYANAGUDA"; break;
+						case 'नारायण गुदा ब्लड बैंक' : textVal = "NARAYANGUDA BLOODBANK"; break;
+						case 'एन सी सी बी' : textVal = "NCCB"; break;
+						case 'निम्स हॉस्पिटल' : textVal = "NIMS HOSPITAL"; break;
+						case 'निज़ाम कॉलेज' : textVal = "NIZAM COLLEGE"; break;
+						case 'इन एम डी सी' : textVal = "NMDC"; break;
+						case 'पैराडाइस' : textVal = "PARADISE"; break;
+						case 'पैराडाइस ऐक्स रोड' : textVal = "PARADISE X ROAD"; break;
+						case 'पाटनचेरु' : textVal = "PATANCHERU"; break;
+						case 'पाटनी' : textVal = "PATNY"; break;
+						case 'पेद्दम्माटेम्पल' : textVal = "PEDDAMMA TEMPLE"; break;
+						case 'पीरज़ादीगुदा' : textVal = "PEERZADIGUDA"; break;
+						case 'पेंशनऑफिस' : textVal = "PENSION OFFICE"; break;
+						case 'प्लेग्राउंड' : textVal = "PLAY GROUND"; break;
+						case 'पुलिसलाइन' : textVal = "POLICE LINE"; break;
+						case 'पॉलिटेक्निककॉलेज' : textVal = "POLYTECHNIC COLLEGE"; break;
+						case 'प्रकाशनगर' : textVal = "PRAKASH NAGAR"; break;
+						case 'रामथिएटर' : textVal = "RAM THEATRE"; break;
+						case 'रामंतपुरकलोनी' : textVal = "RAMANTHAPUR COLONY"; break;
+						case 'रामंतपुरपुब्लिकस्कूल' : textVal = "RAMANTHAPUR PUBLIC SCHOOL"; break;
+						case 'रामकोठी' : textVal = "RAMKOTI"; break;
+						case 'रानी गंज' : textVal = "RANIGUNJ"; break;
+						case 'रानी गंज डिपो' : textVal = "RANIGUNJ DEPOT"; break;
+						case 'आर सी पुरम' : textVal = "RC PURAM"; break;
+						case 'रेथिबौली' : textVal = "RETHIBOWLI"; break;
+						case 'अस पे नगर' : textVal = "S P NAGAR"; break;
+						case 'संगीत' : textVal = "SANGEETH"; break;
+						case 'सरधि स्टूडियो' : textVal = "SARADHI STUDIO"; break;
+						case 'सत्यम जाया भेरी' : textVal = "SATYAM/JAYABHERI"; break;
+						case 'अस डी हॉस्पिटल' : textVal = "SD HOSPITAL"; break;
+					    case 'सेक्रेटेरिएट' : textVal = "SECRETARIAT"; break;
+					    case 'सिकंदराबाद' : textVal = "SECUNDERABAD"; break;
+						case 'शैकपट नाला' : textVal = "SHEIKPETNALA"; break;
+						case 'शिल्पा रामम पुष्पक' : textVal = "SHILPARAMAM PUSHPAK"; break;
+						case 'शॉपपर्स स्टॉप' : textVal = "SHOPPERS STOP"; break;
+						case 'श्याम लाल' : textVal = "SHYAMLAL"; break;
+						case 'यस आर नगर' : textVal = "SR NAGAR"; break;
+						case 'श्री नगर क्रॉस रोड' : textVal = "SRINAGAR X ROAD"; break;
+						case 'श्री राम नगर हॉस्पिटल' : textVal = "SRIRAM NAGAR HOSPITAL"; break;
+						case 'स्टेट होम' : textVal = "STATE HOME"; break;
+						case 'टी वी स्टूडियो' : textVal = "T V STUDIO"; break;
+						case 'तरणका' : textVal = "TARNAKA"; break;
+						case 'टेलीकॉमनगर' : textVal = "TELECOM NAGAR"; break;
+						case 'टेलीफोनभवन' : textVal = "TELEPHONE BHAVAN"; break;
+						case 'तिलकनगर' : textVal = "TILAK NAGAR"; break;
+						case 'टोलीचौकी' : textVal = "TOLICHOWKI"; break;
+						case 'टीवीटावर' : textVal = "TV TOWER"; break;
+						case 'टीवीनाइनमस्जिद' : textVal = "TV9/MASJEED"; break;
+						case 'उप्पल बस स्टॉप' : textVal = "UPPAL BUS STOP"; break;
+						case 'उप्पल डिपो' : textVal = "UPPAL DEPOT"; break;
+						case 'उप्पलगाँधीस्टैचू' : textVal = "UPPAL GANDHI STATUE"; break;
+						case 'उप्पल क्रॉस रोड' : textVal = "UPPAL X ROAD"; break;
+						case 'ऊषा किरन' : textVal = "USHA KIRAN"; break;
+						case 'वेंगलराओपार्करोडएक' : textVal = "VENGALRAO PARK ROAD 1"; break;
+						case 'वेंकटागिरि' : textVal = "VENKATAGIRI"; break;
+						case 'वाटर टैंक' : textVal = "WATER TANK"; break;
+						case 'वेव रॉक' : textVal = "WAVEROCK"; break;
+						case 'व्हाइटहाउस' : textVal = "WHITE HOUSE"; break;
+						case 'विप्रो सर्कल' : textVal = "WIPRO CIRCLE"; break;
+						case 'वई एम सी ए' : textVal = "YMCA"; break;
+					    case 'यूसुफगुदा बस्ती' : textVal = "YOUSUFGUDA BASTI"; break;
+						case 'यूसुफगुदा चेकपोस्ट' : textVal = "YOUSUFGUDA CHECKPOST"; break;
+					    case 'झेड टी ऐस' : textVal = "ZTS"; break;
+
+	                }
+                } else if(localLanguageCode == "3") {
+	                switch(textVal) {
+				       	case '6 నెంబర్' : textVal = "6 NUMBER"; break;
+						case 'అబిడ్స్ జి పి ఓ' : textVal = "ABIDS GPO"; break;
+						case 'అబిడ్స్ గ్రామర్ స్కూల్' : textVal = "ABIDS GRAMMER SCHOOL"; break;
+						case 'ఏ జి ఆఫీసు'  : textVal = "AG OFFICE"; break;
+						case 'అలగడ్డ బావి'  : textVal = "ALAGADDA BAAVI"; break;
+						case 'ఆలిండ్'  : textVal = "ALIND"; break;
+						case 'ఆల్విన్ x రోడ్' : textVal = "ALLWYN X ROAD"; break;
+						case 'అంబర్ పేట్' : textVal = "AMBERPET"; break;
+						case 'అంబర్ పేట్ గాంధీ స్టేట్యూ' : textVal = "AMBERPET GANDHI STATUE"; break;
+						case 'అమీర్ పేట్' : textVal = "AMEERPET"; break;
+						case 'ఆనంద్ ధియేటర్'  : textVal = "ANAND THEATER"; break;
+						case 'ఆంధ్రజ్యోతి' : textVal = "ANDHRAJYOTHI"; break;
+						case 'అంజయ్య నగర్'  : textVal = "ANJAIAH NAGAR"; break;
+						case 'అన్నపూర్ణ'  : textVal = "ANNAPURNA"; break;
+						case 'అన్నపూర్ణ హోటల్' : textVal = "ANNAPURNA HOTEL"; break;
+						case 'అశోక్ నగర్' : textVal = "ASHOK NAGAR"; break;
+						case 'అశోక్ నగర్ పార్క్' : textVal = "ASHOK NAGAR PARK"; break;
+						case 'అశోక్ నగర్ x రోడ్'  : textVal = "ASHOK NAGAR X ROAD"; break;
+						case 'ఆసిఫ్ నగర్' : textVal = "ASIF NAGAR"; break;
+						case 'అసెంబ్లీ'  : textVal = "ASSEMBLY"; break;
+						case 'అసెంబ్లీ/ఎయిర్' : textVal = "ASSEMBLY/AIR"; break;
+						case 'బాగ్ లింగంపల్లి' : textVal = "BAGHLINGAMPALLY"; break;
+						case 'బర్కత్ పుర'  : textVal = "BARKATHAPURA"; break;
+						case 'బాటా'  : textVal = "BATA"; break;
+						case 'బేగంపేట్ పబ్లిక్ స్కూల్'  : textVal = "BEGUMPET PUBLIC SCHOOL"; break;
+						case 'భరత్ నగర్'  : textVal = "BHARAT NAGAR"; break;
+						case 'భెల్'  : textVal = "BHEL"; break;
+						case 'బి జె ఆర్ కాలేజ్'   : textVal = "BJR COLLEGE"; break;
+						case 'బోడుప్పల్ x రోడ్'  : textVal = "BODUPPAL X ROAD"; break;
+						case 'బృందావన్ కాలనీ'  : textVal = "BRINDAVAN COLONY"; break;
+						case 'కేప్ జెమినీ' : textVal = "CAPGEMINI"; break;
+						case 'కార్బైడ్' : textVal = "CARBIDE"; break;
+						case 'కేర్ హాస్పిటల్' : textVal = "CARE HOSPITAL"; break;
+						case 'సెంట్రల్ బ్యాంక్'  : textVal = "CENTRAL BANK"; break;
+						case 'చాదర్ ఘాట్'  : textVal = "CHADERGHAT"; break;
+						case 'చందా నగర్' : textVal = "CHANDA NAGAR"; break;
+						case 'చర్మాస్'  : textVal = "CHERMAS"; break;
+						case 'చిరేక్ స్కూల్'  : textVal = "CHIREC SCHOOL"; break;
+						case 'చర్చ్' : textVal = "CHURCH"; break;
+						case 'క్లాక్ టవర్'  : textVal = "CLOCK TOWER"; break;
+						case 'కాంటినెంటల్ హాస్పిటల్'  : textVal = "CONTINENTAL HOSPITAL"; break;
+						case 'సి ఆర్  ఫౌండేషన్'  : textVal = "CR FOUNDATION"; break;
+						case 'దర్గా'  : textVal = "DARGA"; break;
+						case 'దీప్తిశ్రి నగర్/మదీనగూడ'  : textVal = "DEEPTHISRI NAGAR/ MADINAGUDA"; break;
+						case 'దిల్ సుఖ్ నగర్'  : textVal = "DILSUKH NAGAR"; break;
+						case 'దిల్ సుఖ్ నగర్ డిపో'  : textVal = "DILSUKH NAGAR DEPOT"; break;
+						case 'ఇ సి ఐ ఎల్ x రోడ్'  : textVal = "ECIL X ROAD"; break;
+						case 'ఎర్రగడ్డ' : textVal = "ERRAGADDA"; break;
+						case 'ఎర్రమంజిల్' : textVal = "ERRAMANZIL"; break;
+						case 'ఇ ఎస్ ఐ హాస్పిటల్' : textVal = "ESI HOSPITAL"; break;
+						case 'ఫీవర్ హాస్పిటల్'  : textVal = "FEVER HOSPITAL"; break;
+						case 'ఫైనాన్సీయల్ డిస్ట్రిక్ట్'  : textVal = "FINANCIAL DISTRICT"; break;
+						case 'గచ్చిబౌలి పుష్పక్'  : textVal = "GACHIBOWLI PUSHPAK"; break;
+						case 'గచ్చిబౌలి X రోడ్'  : textVal = "GACHIBOWLI X ROAD"; break;
+						case 'గంగారం'  : textVal = "GANGARAM"; break;
+						case 'గ్రీన్ లాండ్స్'  : textVal = "GREENLANDS"; break;
+						case 'గుల్ మొహర్ పార్క్' : textVal = "GULMOHAR PARK"; break;
+						case 'హెచ్ బి ప్లే గ్రౌండ్'  : textVal = "H B PLAY GROUND"; break;
+						case 'హఫీజ్ పేట్'  : textVal = "HAFEEZPET"; break;
+						case 'హెచ్ సి యు డిపో'  : textVal = "HCU DEPOT"; break;
+						case 'హెచ్ సి యు మెయిన్ గేట్'  : textVal = "HCU MAIN GATE"; break;
+						case 'హిమాయత్ నగర్'  : textVal = "HIMAYAT NAGAR"; break;
+						case 'హైటెక్ సిటీ'  : textVal = "HITECH CITY"; break;
+						case 'హైటెక్ శిల్పారామం'  : textVal = "HITECH SHILPARAMAM"; break;
+						case 'హైటెక్స్ కమాన్'  : textVal = "HITEX KAMAN"; break;
+						case 'హనీవెల్'  : textVal = "HONEYWELL"; break;
+						case 'హైదర్ నగర్'  : textVal = "HYDERNAGAR"; break;
+						case 'ఐ సి ఐ సి ఐ'  : textVal = "ICICI"; break;
+						case 'ఐ ఐ ఐ టి'  : textVal = "IIIT"; break;
+						case 'ఇందిరా నగర్'   : textVal = "INDIRA NAGAR"; break;
+						case 'ఇండస్ట్రియల్ ఎస్టేట్'  : textVal = "INDUSTRIAL ESTATE"; break;
+						case 'ఇన్ఫోసిస్'  : textVal = "INFOSYS"; break;
+						case 'ఇన్ఫోటెక్'  : textVal = "INFOTECH"; break;
+						case 'ఇరానీ హోటల్'  : textVal = "IRANI HOTEL"; break;
+						case 'జేమ్స్ స్ట్రీట్'  : textVal = "JAMES STREET"; break;
+						case 'జె ఎన్ టి యు'  : textVal = "JNTU"; break;
+						case 'జూబ్లీ హిల్స్ చెక్ పోస్ట్'  : textVal = "JUBILEE HILLS CHECKPOST"; break;
+						case 'జూనియర్ కాలేజ్'  : textVal = "JUNIOR COLLEGE"; break;
+						case 'జ్యోతి నగర్'  : textVal = "JYOTHI NAGAR"; break;
+						case 'కాచిగూడ x రోడ్'  : textVal = "KACHIGUDA X ROAD"; break;
+						case 'కళ్యాణ్ నగర్'  : textVal = "KALYAN NAGAR"; break;
+						case 'కమల నగర్'  : textVal = "KAMALA NAGAR"; break;
+						case 'కీర్తి మహల్'  : textVal = "KEERTHI MAHAL"; break;
+						case 'ఖైరతాబాద్'  : textVal = "KHAIRATABAD"; break;
+						case 'ఖైరతాబాద్  అర్ టి ఓ ఆఫీసు' : textVal = "KHAIRATABAD RTO OFFICE"; break;
+						case 'ఖాజాగూడ x రోడ్'  : textVal = "KHAJAGUDA X ROAD"; break;
+						case 'కొండాపూర్'  : textVal = "KONDAPUR"; break;
+						case 'కొత్త గూడ'  : textVal = "KOTHAGUDA"; break;
+						case 'కొత్త గూడ x రోడ్'  : textVal = "KOTHAGUDA X ROAD"; break;
+						case 'కోఠి'  : textVal = "KOTI"; break;
+						case 'కోఠి మెటర్నిటీ హాస్పిటల్'  : textVal = "KOTI MATERNITY HOSPITAL"; break;
+						case 'కోఠి మహిళా కళాశాల'  : textVal = "KOTI WOMENS COLLEGE"; break;
+						case 'కె పి హెచ్ బి మెయిన్ రోడ్'  : textVal = "KPHB MAIN ROAD "; break;
+						case 'కృష్ణకాంత్ పార్క్'  : textVal = "KRISHNA KANTH PARK"; break;
+						case 'కృష్ణానగర్'  : textVal = "KRISHNA NAGAR"; break;
+						case 'కూకట్ పల్లి'  : textVal = "KUKATPALLY"; break;
+						case 'లక్డికాపూల్'  : textVal = "LAKDIKAPOOL"; break;
+						case 'లాలాపేట్'  : textVal = "LALAPET"; break;
+						case 'లాల్ బంగ్లా'  : textVal = "LALBUNGALOW"; break;
+						case 'లక్ష్మి నగర్'  : textVal = "LAXMI NAGAR"; break;
+						case 'లిబర్టీ'  : textVal = "LIBERTY"; break;
+						case 'లిడ్ క్యాప్'  : textVal = "LIDCAP"; break;
+						case 'ఎల్ ఐ జి'  : textVal = "LIG"; break;
+						case 'లింగంపల్లి'  : textVal = "LINGAMPALLY "; break;
+						case 'లింగంపల్లి రైల్వే స్టేషన్'  : textVal = "LINGAMPALLY RAILWAY STATION"; break;
+						case 'ఎల్ వీ ప్రసాద్'  : textVal = "LV PRASAD"; break;
+						case 'మాదాపూర్ ఇమేజ్ హాస్పిటల్'  : textVal = "MADHAPUR IMAGE HOSPITAL"; break;
+						case 'మాదాపూర్ పెట్రోల్ బంక్'  : textVal = "MADHAPUR PETROL BUNK"; break;
+						case 'మాదాపూర్ పోలీస్ స్టేషన్'  : textVal = "MADHAPUR PS"; break;
+						case 'మాదాపూర్ నిఫ్ట్'  : textVal = "MADHAPUR NIFT"; break;
+						case 'మహావీర్ హాస్పిటల్'  : textVal = "MAHAVIR HOSPITAL"; break;
+						case 'మహావీర్ హాస్పిటల్/జె  ఎన్  టీ  యు'  : textVal = "MAHAVIR HOSPITAL JNTU"; break;
+						case 'మలక్ పేట్ గంజ్'  : textVal = "MALAKPET GUNJ"; break;
+						case 'మలక్ పేట్ సూపర్ బజార్'  : textVal = "MALAKPET SUPER BAZAAR"; break;
+						case 'మండల ఆఫీసు'  : textVal = "MANDAL OFFICE"; break;
+						case 'మాసాబ్ ట్యాంక్'  : textVal = "MASAB TANK"; break;
+						case 'మసీద్ బండ'  : textVal = "MASJID BANDA"; break;
+						case 'మసీద్ బండ విలేజ్'  : textVal = "MASJID BANDA VILLAGE"; break;
+						case 'మెడికల్ కాలేజ్'  : textVal = "MEDICAL COLLEGE"; break;
+						case 'మెహదిపట్నం'  : textVal = "MEHDIPATNAM"; break;
+						case 'మెట్టుగూడ'  : textVal = "METTUGUDA"; break;
+						case 'ఎం జి బి ఎస్'  : textVal = "MGBS"; break;
+						case 'మినర్వా'  : textVal = "MINERVA"; break;
+						case 'మియాపూర్'  : textVal = "MIYAPUR"; break;
+						case 'మియాపూర్ బస్ డిపో'  : textVal = "MIYAPUR BUSDEPO"; break;
+						case 'మియాపూర్ x రోడ్'  : textVal = "MIYAPUR CROSS ROAD"; break;
+						case 'మియాపూర్ 2 బస్ డిపో'   : textVal = "MIYAPUR2 BUSDEPOT"; break;
+						case 'మోడరన్ బేకరి'  : textVal = "MODERN BAKERY"; break;
+						case 'మూసాపేట్'  : textVal = "MOOSAPET"; break;
+						case 'మూసారాం బాగ్'  : textVal = "MOOSHARAMBAGH"; break;
+						case 'మౌలాలీ ఉనానీ దిస్పెంసరి'  : textVal = "MOULALI UNANI DISPENSARY"; break;
+						case 'ముషీరాబాద్ -2'  : textVal = "MSRD2"; break;
+						case 'మైత్రీవనం'  : textVal = "MYTHRIVANAM"; break;
+						case 'నల్గొండ x రోడ్'  : textVal = "NALGONDA X ROAD"; break;
+						case 'నాంపల్లి పబ్లిక్ గార్డెన్'  : textVal = "NAMPALLY PUBLIC GARDEN"; break;
+						case 'నానల్ నగర్' 	 : textVal = "NANAL NAGAR"; break;
+						case 'నారాయణగూడ'  : textVal = "NARAYANAGUDA"; break;
+						case 'నారాయణగూడ బ్లడ్ బ్యాంక్'  : textVal = "NARAYANGUDA BLOODBANK"; break;
+						case 'ఎన్ సి సి బీ'  	: textVal = "NCCB"; break;
+						case 'నిమ్స్ హాస్పిటల్'  : textVal = "NIMS HOSPITAL"; break;
+						case 'నిజాం కాలేజ్'  : textVal = "NIZAM COLLEGE"; break;
+						case 'నిజాంపేట్ x రోడ్'  : textVal = "NIZAMPET X ROAD"; break;
+						case 'ఎన్ ఎమ్ డీ సి'  : textVal = "NMDC"; break;
+						case 'పారడైస్'  : textVal = "PARADISE"; break;
+						case 'పారడైస్ x రోడ్'  : textVal = "PARADISE X ROAD"; break;
+						case 'పటాన్ చెరువు'  : textVal = "PATANCHERU"; break;
+						case 'పాట్ని'  : textVal = "PATNY"; break;
+						case 'పెద్దమ్మ టెంపుల్'  : textVal = "PEDDAMMA TEMPLE"; break;
+						case 'పీర్జాది గూడ'  : textVal = "PEERZADIGUDA"; break;
+						case 'పెన్షన్ ఆఫీసు'  : textVal = "PENSION OFFICE"; break;
+						case 'ప్లేగ్రౌండ్'  : textVal = "PLAY GROUND"; break;
+						case 'పోలీస్ లైన్'  : textVal = "POLICE LINE"; break;
+						case 'పాలిటెక్నిక్ కాలేజ్'  : textVal = "POLYTECHNIC COLLEGE"; break;
+						case 'ప్రకాష్ నగర్'  : textVal = "PRAKASH NAGAR"; break;
+						case 'రామ్ ధియేటర్'   : textVal = "RAM THEATRE"; break;
+						case 'రామంతపూర్ కాలనీ'  : textVal = "RAMANTHAPUR COLONY"; break;
+						case 'రామంతపూర్ కాలనీ పబ్లిక్ స్కూల్'   : textVal = "RAMANTHAPUR PUBLIC SCHOOL"; break;
+						case 'రామ్ కోఠి' : textVal = "RAMKOTI"; break;
+						case 'రాణీగంజ్'   : textVal = "RANIGUNJ"; break;
+						case 'రాణీగంజ్ డిపో'   : textVal = "RANIGUNJ DEPOT"; break;
+						case 'ఆర్ సి పురం'   : textVal = "RC PURAM"; break;
+						case 'రేతిబౌల్లి'  : textVal = "RETHIBOWLI"; break;
+						case 'ఎస్ పీ నగర్'  : textVal = "S P NAGAR"; break;
+						case 'సంగీత్'   : textVal = "SANGEETH"; break;
+						case 'సారధి స్టూడియో'    : textVal = "SARADHI STUDIO"; break;
+						case 'సత్యం/జయభేరి'   : textVal = "SATYAM/JAYABHERI"; break;
+						case 'ఎస్ డీ హాస్పిటల్'    : textVal = "SD HOSPITAL"; break;
+						case 'సెక్రటేరియట్'   : textVal = "SECRETARIAT"; break;
+						case 'సికింద్రాబాద్'   : textVal = "SECUNDERABAD"; break;
+						case 'షేక్ పేట్ నాలా'   : textVal = "SHEIKPETNALA"; break;
+						case 'శిల్పారామం పుష్పక్'   : textVal = "SHILPARAMAM PUSHPAK"; break;
+						case 'షాపర్స్ స్టాప్'    : textVal = "SHOPPERS STOP"; break;
+						case 'శ్యామ్ లాల్'    : textVal = "SHYAMLAL"; break;
+						case 'ఎస్ ఆర్ నగర్'    : textVal = "SR NAGAR"; break;
+						case 'శ్రీనగర్ x రోడ్'    : textVal = "SRINAGAR X ROAD"; break;
+						case 'శ్రీరామ్ నగర్ హాస్పిటల్'   : textVal = "SRIRAM NAGAR HOSPITAL"; break;
+						case 'స్టేట్ హోం'   : textVal = "STATE HOME"; break;
+						case 'టీ వీ స్టూడియో'    : textVal = "T V STUDIO"; break;
+						case 'తార్నాక'    : textVal = "TARNAKA"; break;
+						case 'టెలికాం నగర్'    : textVal = "TELECOM NAGAR"; break;
+						case 'టెలిఫోన్ భవన్'   : textVal = "TELEPHONE BHAVAN"; break;
+						case 'తిలక్ నగర్'   : textVal = "TILAK NAGAR"; break;
+						case 'టోలిచౌకి'   : textVal = "TOLICHOWKI"; break;
+						case 'టీ వీ టవర్'   : textVal = "TV TOWER"; break;
+				     	case 'టీ వీ 9/మసీద్'   : textVal = "TV9/MASJEED"; break;
+						case 'ఉప్పల్ బస్ స్టాప్'   : textVal = "UPPAL BUS STOP"; break;
+						case 'ఉప్పల్ డిపో'   : textVal = "UPPAL DEPOT"; break;
+						case 'ఉప్పల్ గాంధీ స్టేట్యూ'   : textVal = "UPPAL GANDHI STATUE"; break;
+						case 'ఉప్పల్ x రోడ్'    : textVal = "UPPAL X ROAD"; break;
+						case 'ఉషా కిరణ్'   : textVal = "USHA KIRAN"; break;
+						case 'వెంగళరావు పార్క్ రోడ్ 1'   : textVal = "VENGALRAO PARK ROAD 1"; break;
+						case 'వెంకట గిరి'   : textVal = "VENKATAGIRI"; break;
+					    case 'వాటర్ ట్యాంక్'   : textVal = "WATER TANK"; break;
+						case 'వేవ్ రాక్'    : textVal = "WAVEROCK"; break;
+						case 'వైట్ హౌస్'  : textVal = "WHITE HOUSE"; break;
+						case 'విప్రో సర్కిల్'   : textVal = "WIPRO CIRCLE"; break;
+						case 'వై ఎం సి ఎ'   : textVal = "YMCA"; break;
+						case 'యూసఫ్ గూడా బస్తి'   : textVal = "YOUSUFGUDA BASTI"; break;
+						case 'యూసఫ్ గూడా చెక్ పోస్ట్'    : textVal = "YOUSUFGUDA CHECKPOST";
+						case 'జెడ్ టి ఎస్'    : textVal = "ZTS"; break;
+						
+	                }
+                }
+            	if(textVal != null) {
+					textVal = textVal.toLowerCase();
+                }
+                return rex.test(textVal);
+            }).show();
+        });
+		
+		$("#stopsList").on('click', '.stopName', function(e) {
+		    	
+			e.preventDefault();
+            var textVal = $(this).attr('id').trim();
+            var stopNameText = $(this).text();
+            //alert('selected stop : '+$(this).text());
+            $('.scrollup').fadeOut();       	
+
+			var flag = true;
+			flag = 	checkConnection();
+			
+			if(flag == false) {
+				navigator.notification.alert(
+				    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+				    closeActivity,         				// callback
+				    'No network connection',            // title
+				    'OK'                  				// buttonName
+				);
+			} else {
+	        	if(textVal != null) {
+		            $.ajax({
+		            	type: "GET", 
+		                url: globalURL+'query='+textVal+',0,145&flag=7',
+		                beforeSend: function () { 
+		                	$(".ajaxloader").show();
+		                },
+		        		complete: function () { 
+		        			$(".ajaxloader").hide(); 
+		        		},
+		                success: function(showdata) { 
+			
+							var sendingdate = showdata.split(";");
+							var details = '<ul class="routestopDetails">';
+							for (var i in sendingdate) {
+								var kk = sendingdate[i];
+								var busregno = sendingdate[i].split(',')[0];							
+								var routeno = sendingdate[i].split(',')[1];							
+								var destination = sendingdate[i].split(',')[2];							
+								var eta = sendingdate[i].split(',')[3];
+								
+								details += "<div class='table' style='border-radius: 0.46em'><table class='table table-striped table-bordered' align='center'><tr><td style='background-color: #ffc4f4;'>"+MyApp.resources.busStop+"</td><td style='background-color: #ffc4f4;'>"+sendingdate[i].split(',')[0]+"</td></tr><tr><td>"+MyApp.resources.route+"</td><td>"+sendingdate[i].split(',')[1]+"</td></tr><tr><td>"+MyApp.resources.destination+"</td><td>"+convertDataToLocalValue(sendingdate[i].split(',')[2])+"</td></tr><tr><td>"+MyApp.resources.Time+"</td><td>"+sendingdate[i].split(',')[3]+"</td></tr></table></div>";
+								i++;
+							}
+							
+							details += '</ul>';
+							if(showdata != null && showdata != 'undefined' && showdata.indexOf("No records") != -1) {
+								$('#tableData').html(MyApp.resources.norecords);
+							} else {
+								$('#tableData').html(details);
+							}
+							document.getElementById('stopInfo').innerHTML = MyApp.resources.routedetails + " : " + stopNameText;
+			    			$("#myModal").modal('show');
+	    				},                                         
+		          		error: function (xhr, status) {  
+		          		}
+		            });    			
+	        	}
+        	}	
+	    });
+	
+		languageCode = localStorage["languageCode"];
+		if(languageCode == "1") {
+	   		includeJS("js/resources.en.js");
+	    	$.extend(MyApp.resources, localizedResources);
+		} else if(languageCode == "2") {
+	   		includeJS("js/resources.hi.js");
+	    	$.extend(MyApp.resources, localizedResources);
+	    } else if(languageCode == "3") {
+	   		includeJS("js/resources.te.js");
+	    	$.extend(MyApp.resources, localizedResources);
+		}
+
+    	document.getElementById('availableStops').innerHTML = MyApp.resources.stopName+' &nbsp;<i class="glyphicon glyphicon-filter"></i>';   
+		document.getElementById('home').innerHTML = "&nbsp;"+MyApp.resources.home;   
+		document.getElementById('close').innerHTML = MyApp.resources.close;
+		$('#filter').attr('placeholder', MyApp.resources.typeHere);
+		
+		var stopsListInfo = "<tr class='stopName' id='6 NUMBER'><td>"+ MyApp.resources.number6+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ABIDS GPO'><td>"+ MyApp.resources.abidsgpo+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ABIDS GRAMMER SCHOOL'><td>"+ MyApp.resources.abidsgrammerschool+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='AG OFFICE'><td>"+ MyApp.resources.agoffice+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ALAGADDA BAAVI'><td>"+ MyApp.resources.alagaddabaavi+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ALIND'><td>"+ MyApp.resources.alind+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ALLWYN X ROAD'><td>"+ MyApp.resources.allwynxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='AMBERPET'><td>"+ MyApp.resources.amberpet+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='AMBERPET GANDHI STATUE'><td>"+ MyApp.resources.amberpetgandhistatue+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='AMEERPET'><td>"+ MyApp.resources.ameerpet+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ANAND THEATER'><td>"+ MyApp.resources.anandtheater+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ANDHRAJYOTHI'><td>"+ MyApp.resources.andhrajyothi+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ANJAIAH NAGAR'><td>"+ MyApp.resources.anjaiahnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ANNAPURNA'><td>"+ MyApp.resources.annapurna+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ANNAPURNA HOTEL'><td>"+ MyApp.resources.annapurnahotel+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ASHOK NAGAR'><td>"+ MyApp.resources.ashoknagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ASSEMBLY/AIR'><td>"+ MyApp.resources.assemblyair+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BAGHLINGAMPALLY'><td>"+ MyApp.resources.baghlingampally+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BARKATHAPURA'><td>"+ MyApp.resources.barkathapura+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BATA'><td>"+ MyApp.resources.bata+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BEGUMPET PUBLIC SCHOOL'><td>"+ MyApp.resources.begumpetpublicschool+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BHARAT NAGAR'><td>"+ MyApp.resources.bharathnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BHEL'><td>"+ MyApp.resources.bhel+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BJR COLLEGE'><td>"+ MyApp.resources.bjrcollege+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BODUPPAL X ROAD'><td>"+ MyApp.resources.boduppalxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='BRINDAVAN COLONY'><td>"+ MyApp.resources.brindavancolony+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CAPGEMINI'><td>"+ MyApp.resources.capgemini+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CARBIDE'><td>"+ MyApp.resources.carbide+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CARE HOSPITAL'><td>"+ MyApp.resources.carehospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CENTRAL BANK'><td>"+ MyApp.resources.centralbank+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CHADERGHAT'><td>"+ MyApp.resources.chaderghat+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CHANDA NAGAR'><td>"+ MyApp.resources.chandanagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CHERMAS'><td>"+ MyApp.resources.chermas+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CHILKALGUDA'><td>"+ MyApp.resources.chilkalguda+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CHIREC SCHOOL'><td>"+ MyApp.resources.chirecschool+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CHURCH'><td>"+ MyApp.resources.church+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CLOCK TOWER'><td>"+ MyApp.resources.clocktower+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CONTINENTAL HOSPITAL'><td>"+ MyApp.resources.continentalhospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='CR FOUNDATION'><td>"+ MyApp.resources.crfoundation+"</td></tr>";           
+	    stopsListInfo += "<tr class='stopName' id='DARGA'><td>"+ MyApp.resources.darga+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='DEEPTHISRI NAGAR/ MADINAGUDA'><td>"+ MyApp.resources.deepthisrinagarmadinaguda+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='DILSUKH NAGAR'><td>"+ MyApp.resources.dilsukhnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='DILSUKH NAGAR DEPOT'><td>"+ MyApp.resources.dilsukhnagardepot+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ECIL X ROAD'><td>"+ MyApp.resources.ecilxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ERRAGADDA'><td>"+ MyApp.resources.erragadda+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ERRAMANZIL'><td>"+ MyApp.resources.erramanzil+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ESI HOSPITAL'><td>"+ MyApp.resources.esihospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='FEVER HOSPITAL'><td>"+ MyApp.resources.feverhospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='FINANCIAL DISTRICT'><td>"+ MyApp.resources.financialdistrict+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='GACHIBOWLI PUSHPAK'><td>"+ MyApp.resources.gachibowlipushpak+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='GACHIBOWLI X ROAD'><td>"+ MyApp.resources.gachibowlixroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='GANGARAM'><td>"+ MyApp.resources.gangaram+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='GREENLANDS'><td>"+ MyApp.resources.greenlands+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='GULMOHAR PARK'><td>"+ MyApp.resources.gulmoharpark+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='H B PLAY GROUND'><td>"+ MyApp.resources.hbplayground+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HAFEEZPET'><td>"+ MyApp.resources.hafeezpet+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HCU DEPOT'><td>"+ MyApp.resources.hcudepot+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HCU MAIN GATE'><td>"+ MyApp.resources.hcumaingate+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HIMAYAT NAGAR'><td>"+ MyApp.resources.himayathnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HITECH CITY'><td>"+ MyApp.resources.hitechcity+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HITECH SHILPARAMAM'><td>"+ MyApp.resources.hitechshilparamam+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HITEX KAMAN'><td>"+ MyApp.resources.hitexkaman+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HONEYWELL'><td>"+ MyApp.resources.honeywell+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='HYDERNAGAR'><td>"+ MyApp.resources.hydernagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ICICI'><td>"+ MyApp.resources.icici+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ICRISAT'><td>"+ MyApp.resources.icrisat+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='IIIT'><td>"+ MyApp.resources.iiit+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='INDIRA NAGAR'><td>"+ MyApp.resources.indiranagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='INDUSTRIAL ESTATE'><td>"+ MyApp.resources.industrialestate+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='INFOSYS'><td>"+ MyApp.resources.infosys+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='INFOTECH'><td>"+ MyApp.resources.infotech+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='IRANI HOTEL'><td>"+ MyApp.resources.iranihotel+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='JAMES STREET'><td>"+ MyApp.resources.jamesstreet+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='JNTU'><td>"+ MyApp.resources.jntu+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='JUBILEE HILLS CHECKPOST'><td>"+ MyApp.resources.jubileehillscheckpost+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='JUNIOR COLLEGE'><td>"+ MyApp.resources.juniorcollege+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='JYOTHI NAGAR'><td>"+ MyApp.resources.jyothinagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KACHIGUDA X ROAD'><td>"+ MyApp.resources.kachigudaxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KALYAN NAGAR'><td>"+ MyApp.resources.kalyannagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KAMALA NAGAR'><td>"+ MyApp.resources.kamalanagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KEERTHI MAHAL'><td>"+ MyApp.resources.keerthimahal+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KHAIRATABAD'><td>"+ MyApp.resources.khairathabad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KHAIRATABAD RTO OFFICE'><td>"+ MyApp.resources.khairathabadrtooffice+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KHAJAGUDA X ROAD'><td>"+ MyApp.resources.khajagudaxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KONDAPUR'><td>"+ MyApp.resources.kondapur+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KOTHAGUDA'><td>"+ MyApp.resources.kothaguda+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KOTHAGUDA X ROAD'><td>"+ MyApp.resources.kothagudaxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KOTI'><td>"+ MyApp.resources.koti+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KOTI MATERNITY HOSPITAL'><td>"+ MyApp.resources.kotimaternityhospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KOTI WOMENS COLLEGE'><td>"+ MyApp.resources.kotiwomenscollege+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KPHB MAIN ROAD'><td>"+ MyApp.resources.kphbmainroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KRISHNA KANTH PARK'><td>"+ MyApp.resources.krishnakanthpark+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KRISHNA NAGAR'><td>"+ MyApp.resources.krishnanagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='KUKATPALLY'><td>"+ MyApp.resources.kukatpally+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LAKDIKAPOOL'><td>"+ MyApp.resources.lakdikapool+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LALAPET'><td>"+ MyApp.resources.lalapet+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LALBUNGALOW'><td>"+ MyApp.resources.lalbungalow+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LAXMI NAGAR'><td>"+ MyApp.resources.laxminagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LIBERTY'><td>"+ MyApp.resources.liberty+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LIDCAP'><td>"+ MyApp.resources.lidcap+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LIG'><td>"+ MyApp.resources.lig+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LINGAMPALLY'><td>"+ MyApp.resources.lingampally+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LINGAMPALLY RAILWAY STATION'><td>"+ MyApp.resources.lingampallyrailwaystation+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='LV PRASAD'><td>"+ MyApp.resources.lvprasad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MADHAPUR IMAGE HOSPITAL'><td>"+ MyApp.resources.madhapurimagehospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MADHAPUR NIFT'><td>"+ MyApp.resources.madhapurnift+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MADHAPUR PETROL BUNK'><td>"+ MyApp.resources.madhapurpetrolbunk+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MADHAPUR PS'><td>"+ MyApp.resources.madhapurps+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MAHAVIR HOSPITAL'><td>"+ MyApp.resources.mahavirhospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MAHAVIR HOSPITAL JNTU'><td>"+ MyApp.resources.mahavirhospitaljntu+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MALAKPET GUNJ'><td>"+ MyApp.resources.malakpetgunj+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MALAKPET SUPER BAZAAR'><td>"+ MyApp.resources.malakpetsuperbazaar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MANDAL OFFICE'><td>"+ MyApp.resources.mandaloffice+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MASAB TANK'><td>"+ MyApp.resources.masabtank+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MASJID BANDA'><td>"+ MyApp.resources.masjidbanda+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MASJID BANDA VILLAGE'><td>"+ MyApp.resources.masjidbandavillage+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MEDICAL COLLEGE'><td>"+ MyApp.resources.medicalcollege+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MEHDIPATNAM'><td>"+ MyApp.resources.mehdipatnam+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='METTUGUDA'><td>"+ MyApp.resources.mettuguda+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MGBS'><td>"+ MyApp.resources.mgbs+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MINERVA'><td>"+ MyApp.resources.minerva+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MIYAPUR'><td>"+ MyApp.resources.miyapur+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MIYAPUR2 BUSDEPOT'><td>"+ MyApp.resources.miyapur2busdepot+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MIYAPUR BUSDEPO'><td>"+ MyApp.resources.miyapurbusdepo+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MIYAPUR CROSS ROAD'><td>"+ MyApp.resources.miyapurcrossroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MIYAPUR X ROAD'><td>"+ MyApp.resources.miyapurxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MODERN BAKERY'><td>"+ MyApp.resources.modernbakery+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MOOSAPET'><td>"+ MyApp.resources.moosapet+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MOOSHARAMBAGH'><td>"+ MyApp.resources.moosharambagh+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MOULALI UNANI DISPENSARY'><td>"+ MyApp.resources.moulaliunanidispensary+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MSRD2'><td>"+ MyApp.resources.msrd2+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='MYTHRIVANAM'><td>"+ MyApp.resources.mythrivanam+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NALGONDA X ROAD'><td>"+ MyApp.resources.nalgondaxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NAMPALLY PUBLIC GARDEN'><td>"+ MyApp.resources.nampallypublicgarden+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NANAL NAGAR'><td>"+ MyApp.resources.nanalnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NARAYANAGUDA'><td>"+ MyApp.resources.narayanaguda+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NARAYANGUDA BLOODBANK'><td>"+ MyApp.resources.narayangudabloodbank+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NCCB'><td>"+ MyApp.resources.nccb+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NIMS HOSPITAL'><td>"+ MyApp.resources.nimshospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NIZAM COLLEGE'><td>"+ MyApp.resources.nizamcollege+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NIZAMPET X ROAD'><td>"+ MyApp.resources.nizampetzroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='NMDC'><td>"+ MyApp.resources.nmdc+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PARADISE'><td>"+ MyApp.resources.paradise+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PARADISE X ROAD'><td>"+ MyApp.resources.paradisexroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PATANCHERU'><td>"+ MyApp.resources.patancheru+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PATNY'><td>"+ MyApp.resources.patny+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PEDDAMMA TEMPLE'><td>"+ MyApp.resources.peddammatemple+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PEERZADIGUDA'><td>"+ MyApp.resources.peerzadiguda+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PENSION OFFICE'><td>"+ MyApp.resources.pensionoffice+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PLAY GROUND'><td>"+ MyApp.resources.playground+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='POLICE LINE'><td>"+ MyApp.resources.policeline+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='POLYTECHNIC COLLEGE'><td>"+ MyApp.resources.polytechniccollege+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='PRAKASH NAGAR'><td>"+ MyApp.resources.prakashnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='RAM THEATRE'><td>"+ MyApp.resources.ramtheatre+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='RAMANTHAPUR COLONY'><td>"+ MyApp.resources.ramanthapurcolony+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='RAMANTHAPUR PUBLIC SCHOOL'><td>"+ MyApp.resources.ramanthapurpublicschool+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='RAMKOTI'><td>"+ MyApp.resources.ramkoti+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='RANIGUNJ'><td>"+ MyApp.resources.ranigunj+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='RANIGUNJ DEPOT'><td>"+ MyApp.resources.ranigunjdepot+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='RC PURAM'><td>"+ MyApp.resources.rcpuram+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='RETHIBOWLI'><td>"+ MyApp.resources.rethibowli+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='S P NAGAR'><td>"+ MyApp.resources.spnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SANGEETH'><td>"+ MyApp.resources.sangeeth+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SARADHI STUDIO'><td>"+ MyApp.resources.saradhistudio+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SATYAM/JAYABHERI'><td>"+ MyApp.resources.satyamjayabheri+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SD HOSPITAL'><td>"+ MyApp.resources.sdhospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SECRETARIAT'><td>"+ MyApp.resources.secretariat+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SECUNDERABAD'><td>"+ MyApp.resources.secunderabad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SHEIKPETNALA'><td>"+ MyApp.resources.sheikpetnala+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SHILPARAMAM PUSHPAK'><td>"+ MyApp.resources.shilparamampushpak+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SHOPPERS STOP'><td>"+ MyApp.resources.shoppersstop+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SHYAMLAL'><td>"+ MyApp.resources.shyamlal+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SR NAGAR'><td>"+ MyApp.resources.srnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SRINAGAR X ROAD'><td>"+ MyApp.resources.srinagarxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='SRIRAM NAGAR HOSPITAL'><td>"+ MyApp.resources.sriramnagarhospital+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='STATE HOME'><td>"+ MyApp.resources.statehome+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='T V STUDIO'><td>"+ MyApp.resources.tvstudio+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='TARNAKA'><td>"+ MyApp.resources.tarnaka+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='TELECOM NAGAR'><td>"+ MyApp.resources.telecomnagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='TELEPHONE BHAVAN'><td>"+ MyApp.resources.telephonebhavan+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='TILAK NAGAR'><td>"+ MyApp.resources.tilaknagar+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='TOLICHOWKI'><td>"+ MyApp.resources.tolichowki+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='TV TOWER'><td>"+ MyApp.resources.tvtower+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='TV9/MASJEED'><td>"+ MyApp.resources.tv9masjeed+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='UPPAL BUS STOP'><td>"+ MyApp.resources.uppalbusstop+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='UPPAL DEPOT'><td>"+ MyApp.resources.uppaldepot+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='UPPAL GANDHI STATUE'><td>"+ MyApp.resources.uppalgandhistatue+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='UPPAL X ROAD'><td>"+ MyApp.resources.uppalxroad+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='USHA KIRAN'><td>"+ MyApp.resources.ushakiran+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='VENGALRAO PARK ROAD 1'><td>"+ MyApp.resources.vengalraoparkroad1+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='VENKATAGIRI'><td>"+ MyApp.resources.venkatagiri+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='WATER TANK'><td>"+ MyApp.resources.watertank+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='WAVEROCK'><td>"+ MyApp.resources.waverock+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='WHITE HOUSE'><td>"+ MyApp.resources.whitehouse+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='WIPRO CIRCLE'><td>"+ MyApp.resources.wiprocircle+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='YMCA'><td>"+ MyApp.resources.ymca+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='YOUSUFGUDA BASTI'><td>"+ MyApp.resources.yousufgudabasti+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='YOUSUFGUDA CHECKPOST'><td>"+ MyApp.resources.yousufgudacheckpost+"</td></tr>";
+	    stopsListInfo += "<tr class='stopName' id='ZTS'><td>"+ MyApp.resources.zts+"</td></tr>";
+
+		document.getElementById('stopsList').innerHTML = stopsListInfo;
+	
+	});
+
+	document.addEventListener("deviceready", onDeviceReady, false);
+	function onDeviceReady() {
+		console.log("onDeviceReady");
+		UrlPlugin.prototype.send( function (result) { 
+			globalURL = result;
+		}, function (e) {
+			alert('Message Failed:' + e);
+		});
+		document.addEventListener("backbutton", doBack, false);
+		var flag = true;
+		flag = 	checkConnection();
+		
+		if(flag == false) {
+			navigator.notification.alert(
+			    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+			    closeActivity,         				// callback
+			    'No network connection',            // title
+			    'OK'                  				// buttonName
+			);
+		} else {
+			document.getElementsByTagName("body")[0].style.display = "block";
+		}
+	}
+	
+	function closeActivity() {
+		navigator.app.exitApp();
+	}
+
+	function doBack() {
+		document.location = "index.html";
+	}
+	
+	function checkConnection() {
+	    var networkState = navigator.network.connection.type;
+	    var booldata = true;
+	
+	    if(networkState == Connection.NONE || networkState == Connection.UNKNOWN) {
+	    	booldata = false;
+	    }
+	    return booldata;
+	}
+
+	function includeJS(jsFile) {
+	    $('head').append($('<script>').attr('type', 'text/javascript').attr('src', jsFile));
+	}
+
+</script>
+	
+</body>
+</html>

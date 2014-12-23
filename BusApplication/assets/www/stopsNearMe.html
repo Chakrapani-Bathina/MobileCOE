@@ -1,0 +1,386 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Show Stops</title>
+<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+
+<script src="js/cordova.js"></script>
+<script src="js/UrlPlugin.js"> </script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/bootstrap.min.js"></script>
+<script src="js/resources.default.js"> </script>
+<script src="js/resources.en.js"> </script>
+
+<style type="text/css">
+html { height: 100% }
+body { height: 98%; margin: 0; padding: 0 }
+#map_canvas { 
+    height: 100%;
+    margin-top: 100px;
+	margin-left: 10px;
+    margin-right: 10px;
+ }
+
+.pager li>a, .pager li>span {
+	
+	padding: 0px 0px;	
+	border: 0px solid #ddd;
+	border-radius: 10px;
+	margin-left:10px;
+	margin-right:10px;
+}
+.btn-custom {
+	padding: 4px 15px 6px;
+	background-color: #F0EDE5;
+	border: 2px solid #234;
+	border-radius:4px;
+	color: #234;
+}
+
+.gmnoprint {
+	display: block;
+}
+.gm-style {
+	border: 2px solid #234;
+	border-radius:4px;
+}
+.gm-style-cc {
+	display: none;
+}
+
+.container {
+	padding-bottom:35px;
+}
+
+.loader {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url('images/loading.gif') 50% 50% no-repeat rgb(249,249,249);
+}
+
+.ajaxloader {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url('images/spinner.gif') 50% 50% no-repeat;
+}
+
+</style>
+
+<script type="text/javascript">
+
+	var DataRecieved;
+	var BusDep = [];
+	var BusDepDet = [];
+	var id;
+	var i;
+	
+	var D = new Date();
+	var year = D.getFullYear();
+	var month = D.getMonth()+1;
+	var day = D.getDate();
+	if(month < 10) month = "0"+month;
+	if(day < 10) day = "0"+day;
+	var date = year+""+month+""+day;
+	var hours = D.getHours();
+	var minutes = D.getMinutes();
+	var seconds = D.getSeconds();
+	var time = hours + "" + minutes + "" + seconds;
+	var timestampValue = date+time;
+	var globalURL;
+	var lat, lng;
+	var map;
+
+	function loadScript() {
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.src = 'https://maps.googleapis.com/maps/api/js?v=3.exp&language=hi';
+		document.body.appendChild(script);
+	}
+
+	function showInformation(sid) {
+		
+		var flag = true;
+		flag = 	checkConnection();
+		
+		if(flag == false) {
+			navigator.notification.alert(
+			    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+			    closeActivity,         				// callback
+			    'No network connection',            // title
+			    'OK'                  				// buttonName
+			);
+		} else {
+	        $.ajax({
+	        	type: "GET", 
+	            url: globalURL+"query="+sid+",0,67&flag=6",
+	            beforeSend: function () {
+	            	$(".ajaxloader").show();
+	            },
+	    		complete: function () {
+	    			$(".ajaxloader").hide(); 
+	    		},
+	            success: function(response) { 
+					var dataArray = response.split(';');
+					var modalBody = "";
+					
+				    for(i=0;i<dataArray.length;i++)
+				    {			
+						var resArray = dataArray[i].split(",");
+						modalBody += "<div class='table'><table class='table table-hover table-bordered'>"+
+			            	"<tr><td style='background-color: #ffc4f4;'>"+MyApp.resources.busStop+"</td><td style='background-color: #ffc4f4;'>"+resArray[0]+"</td></tr>"+
+			            	"<tr><td>"+MyApp.resources.destination+"</td><td>"+convertDataToLocalValue(resArray[2])+"</td></tr>"+
+			            	"<tr><td>"+MyApp.resources.route+"</td><td>"+resArray[1]+"</td></tr>"+
+			            	"<tr><td>"+MyApp.resources.Time+"</td><td>"+resArray[3]+"</td></tr>"+"</table></div>";			
+					}
+					if(response != null && response != 'undefined' && response.indexOf("No records") != -1) {
+						$('#modalBody').html(MyApp.resources.norecords);
+					} else {
+						$('#modalBody').html(modalBody);
+					}
+					$("#myModal").modal('show');
+				},
+	      		error: function (xhr, status) {
+	      			alert("Unable to get records. Please try again.");
+	      			$(".ajaxloader").hide();  
+	      		}
+	        });
+	   	}    			
+	}
+
+$(document).ready(function() {
+
+	var languageCode = localStorage["languageCode"];
+	//alert("languageCode::"+languageCode+":");
+	if(languageCode == "1") {
+   		includeJS("js/resources.en.js");
+    	$.extend(MyApp.resources, localizedResources);
+	} else if(languageCode == "2") {
+   		includeJS("js/resources.hi.js");
+    	$.extend(MyApp.resources, localizedResources);
+    } else if(languageCode == "3") {
+   		includeJS("js/resources.te.js");
+    	$.extend(MyApp.resources, localizedResources);
+	}
+	
+	document.getElementById('home').innerHTML = "&nbsp;"+MyApp.resources.home;    
+	document.getElementById('refresh').innerHTML = "&nbsp;"+MyApp.resources.refresh;    
+	document.getElementById('busInformation').innerHTML = MyApp.resources.busInformation;  
+	document.getElementById('hyderabad').innerHTML = MyApp.resources.hyderabad;    
+	document.getElementById('close').innerHTML = MyApp.resources.close;
+	document.getElementById('tapNote').innerHTML = MyApp.resources.tapicon;	
+		
+});
+	
+document.addEventListener("deviceready", onDeviceReady, false);
+function onDeviceReady() {
+	UrlPlugin.prototype.send( function (result) { 
+		globalURL = result;
+		getLocation();
+	}, function (e) {
+		alert('Message Failed:' + e);
+	});
+	document.addEventListener("backbutton", doBack, false);
+	var flag = true;
+	flag = 	checkConnection();
+	
+	if(flag == false) {
+		navigator.notification.alert(
+		    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+		    closeActivity,         				// callback
+		    'No network connection',            // title
+		    'OK'                  				// buttonName
+		);
+	} else {
+		document.getElementsByTagName("body")[0].style.display = "block";
+	}
+}
+
+function checkConnection() {
+    var networkState = navigator.network.connection.type;
+    var booldata = true;
+
+    if(networkState == Connection.NONE || networkState == Connection.UNKNOWN) {
+    	booldata = false;
+    }
+    return booldata;
+}
+
+function closeActivity() {
+	navigator.app.exitApp();
+}
+
+function doBack() {
+	document.location = "index.html";
+}
+
+function includeJS(jsFile) {
+    $('head').append($('<script>').attr('type', 'text/javascript').attr('src', jsFile));
+}	  
+
+function getLocation() {
+ 	var mapOptions = {
+ 		center: new google.maps.LatLng(17.439516, 78.360747),
+ 		zoom: 6,
+ 		streetViewControl: false,
+ 		mapTypeId: google.maps.MapTypeId.ROADMAP,
+ 		mapTypeControl: false,
+ 		mapTypeControlOptions: {
+ 		    style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+ 		    position: google.maps.ControlPosition.BOTTOM_CENTER
+ 		}
+ 	};
+ 	map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+    
+    if (navigator.geolocation) {    	
+    	var options = { maximumAge: 50000, timeout: 50000, enableHighAccuracy: true };
+		navigator.geolocation.getCurrentPosition(showPosition, geo_errorme, options);
+    } else { 
+        document.getElementById("map_canvas").innerHTML = "Geo-location is not supported at this time.";
+    }
+}
+
+function geo_errorme(error){ 
+    alert('Unable to find Current Location. Please try again.');
+    document.location = "index.html";
+}
+
+function showPosition(position) {
+  	lat = position.coords.latitude; 
+  	lng = position.coords.longitude;	
+  	initialize(lat, lng);
+}
+
+var mark = [{lat: '', lng: '', description: "", id: ''}, {lat: '', lng: '',	description: "", id: ''}, {lat: '',	lng: '', description: "", id: ''}, {lat: '', lng: '', description: "", id: ''},	{lat: '', lng: '', description: "",	id: ''} ];
+
+function initialize(latitude, longitude) {
+
+    $.ajax({
+    	type: "GET", 
+        url: globalURL+"query="+latitude+","+longitude+","+timestampValue+",0,67&flag=2",
+		complete: function () { 
+			$(".loader").hide(); 
+		},
+        success: function(response) { 
+			
+		 	BusDep = response.split(';');
+			var languageCode = localStorage["languageCode"];
+		
+		    for(i=0;i<BusDep.length;i++)
+		    {
+		     	BusDepDet = BusDep[i].split(',');
+		     	id = BusDep[i].split(',')[0];
+				mark[i].id = id;
+			  	mark[i].lat = BusDepDet[2];
+			  	mark[i].lng = BusDepDet[3];
+			  	var descriptionData = BusDepDet[1];
+			  	var descriptionContent = descriptionData;
+			  	var descriptionArray = [];
+			  	if(descriptionData != null && descriptionData != "" && descriptionData != "undefined") {
+			  		//alert("descriptionData:::***"+descriptionData);
+			  		descriptionArray = descriptionData.split("towards");
+			  		//alert("descriptionArray:0:"+descriptionArray[0]+" :1:"+descriptionArray[1]+":");
+			  		if(descriptionArray != null && descriptionArray.length > 1) {
+				  		if(languageCode == "2" || languageCode == "3") {
+					    	descriptionContent = convertDataToLocalValue(descriptionArray[0])+" ( "+convertDataToLocalValue(descriptionArray[1])+" "+MyApp.resources.towards+" )";
+				  		} else {
+					    	descriptionContent = convertDataToLocalValue(descriptionArray[0])+" ( "+MyApp.resources.towards+" "+convertDataToLocalValue(descriptionArray[1])+" )";
+				  		}
+			  		} else {
+			  			descriptionContent = convertDataToLocalValue(descriptionArray[0]);
+			  		}
+			  	}
+			  	mark[i].description = descriptionContent;
+	     	}
+		  
+		    var marks = BusDep.length;		 		
+		 	var icon = 'images/';
+		 	var infoWindow = new google.maps.InfoWindow();
+		 	
+		 	for (i = 0; i < marks; i++) {
+	 			var data = mark[i]
+	 			var myLatlng = new google.maps.LatLng(mark[i].lat, mark[i].lng);
+	 			var marker = new google.maps.Marker({
+	 				position: myLatlng,
+	 				map: map,
+	 				icon:icon+'busstop.png'
+		 		});
+		 		map.setCenter(new google.maps.LatLng(mark[i].lat, mark[i].lng));
+		 		map.setZoom(16);
+		 	(function(marker, data) {
+		 	
+		 		// Attaching a click event to the current marker
+		 		google.maps.event.addListener(marker, "click", function(e) {
+		 			infoWindow.setContent(data.description);
+		 			infoWindow.open(map, marker);
+		 			showInformation(data.id);
+		 			});
+		 		})(marker, data);
+		 	}			
+		},
+  		error: function (xhr, status) { 
+  			alert("Unable to show bus stops. Please try again."); 
+  			$(".loader").hide();
+  			location.replace(index.html);  			
+  		}
+    });    			
+}
+
+</script>
+
+</head>
+
+<body style="background: url(images/m.jpg); display: none;">
+
+	<div class="loader" style="display: block;" ></div>
+	<div class="ajaxloader" style="display: none;"></div>
+	<div class="container" style="padding: 0px;">
+		<div id="headernav" >
+		<nav class="navbar-fixed-top" role="navigation" style="background: url(images/m.jpg); border-bottom: 3px solid #345678; width: 100%;" >
+			<center>
+				<div style="padding-left:10px; padding-top:0px; padding-right:10px; width: 100%;"><img width="100%" style="height: 66px !important;" src="images/rtc_logo31.gif" /></div>
+			</center>
+		</nav>
+    </div>
+	
+		<div id="map_canvas" style="width: auto; height: 62%; padding-bottom: 4px;"></div>
+		<div id="tapNote" style="padding-left: 10px;"></div>
+		<div>
+			<div style="padding-bottom: 20px;">
+				<ul class="pager" style="margin: 8px 0px 10px;">
+				  	<li class="previous"><a href="index.html" ><span class="glyphicon glyphicon-home btn-custom" id="home">&nbsp;Home</span></a></li>
+				  	<li class="next" ><a href="stopsNearMe.html" ><span class="glyphicon glyphicon-repeat btn-custom" id="refresh">&nbsp;Refresh</span> </a></li>
+				</ul>
+			</div>
+	
+			<nav class="navbar-fixed-bottom" role="navigation" style="background: url(images/m.jpg); border-top: 3px solid #345678; width: 100%;" >
+				<div style="padding-top: 4px; padding-left: 6px; width: 100%"><b>&nbsp;&copy; 2014 TSRTC, <span id="hyderabad"></span>.<b></div>
+			</nav>
+		</div>
+		
+		<div id="myModal" class="modal fade">
+		    <div class="modal-dialog">
+		        <div class="modal-content">
+		            <div class="modal-header">
+		                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		                <h4 class="modal-title" ><span id="busInformation" style='color: #ffc4f4;'></span></h4>
+		            </div>
+		            <div class="modal-body" id="modalBody"></div>
+		            <div class="modal-footer">
+		                <button type="button" class="btn btn-default" data-dismiss="modal" id="close"></button>
+		            </div>
+		        </div>
+		    </div>
+		</div>
+		
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+	</div>
+
+</body>
+</html>

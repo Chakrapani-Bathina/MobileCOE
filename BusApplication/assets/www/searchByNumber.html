@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<meta charset="utf-8">
+<title>Search by Stop</title>
+<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+
+<style>
+html,body,#map-canvas {
+	height: 90%;
+	margin: 0px;
+	padding: 5px;
+	margin-bottom: 75px;
+}
+.scrollup {
+	width:42px;
+	height:42px;			
+	text-indent:-9999px;
+	opacity:0.6;
+	position:fixed;
+	bottom:76px;
+	right:20px;
+	display:none;			
+	background: url('images/icon_top.png') no-repeat;
+}
+
+a.scrollup:link, a.scrollup:visited, a.scrollup:hover, a.scrollup:active {
+    width: 42px;
+    border: none;
+    background-color: #ddd;
+    border-radius:12px;
+    padding: 0px;
+}
+
+.pager li>a, .pager li>span {
+	
+	padding: 0px 0px;	
+	border: 0px solid #ddd;
+	border-radius: 10px;
+	margin-left:10px;
+	margin-right:10px;
+	margin-bottom: 10px;
+}
+
+.btn-custom {
+	padding: 4px 15px 6px;
+	background-color: #F0EDE5;
+	border: 2px solid #234;
+	border-radius:4px;
+	color: #234;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+a:link, a:visited {
+    display: block;
+    font-weight: bold;
+    color: #FFFFFF;
+    background-color: #888888;
+    width: auto;
+    border: 1px solid #000000;
+    border-radius:4px;
+    text-align: left;
+    padding: 4px;
+    text-decoration: none;
+    text-transform: uppercase;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+a:hover, a:active {
+	color: #555555;
+    background-color: #ffc4f4;
+}
+
+.busNumber {
+	color: #3C8FB9;
+}
+
+.container {
+	padding-bottom:30px;
+}
+
+.loader {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url('images/loading.gif') 50% 50% no-repeat rgb(249,249,249);
+}
+
+.ajaxloader {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url('images/spinner.gif') 50% 50% no-repeat;
+}
+
+</style>
+</head>
+<body style="background: url(images/m.jpg); display: none;" >
+
+
+<a href="" class="scrollup" style="display: none;">Scroll</a>
+
+	<div class="loader"></div>
+	<div class="ajaxloader" style="display: none;"></div>
+	<div class="container">
+		<div id="headernav" >
+			<nav id="navHeader" class="navbar-fixed-top" role="navigation" style="background: url(images/m.jpg); border-bottom: 3px solid #345678; width: 100%;" >
+				<center>
+					<div style="padding-left:10px; padding-top:0px; padding-right:10px; width: 100%;"><img width="100%" style="height: 66px !important;" src="images/rtc_logo31.gif" /></div>
+				</center>
+			</nav>
+    	</div>
+	</div>
+	<div style="margin-top: 54px; padding-bottom: 10px;" id="stopsPanel">
+		<div class="input-group" style="padding-bottom: 20px; width:300px;"> <span class="input-group-addon" id="availableStops"></span>
+    		<input id="filter" type="text" class="form-control" placeholder="type here ...">
+		</div>
+		<div class="table">
+			<table class="table table-bordered">
+			    <tbody class="searchable" id="stopsList">
+					<tr class='busNumber' id='1C'><td>1C</td></tr>
+					<tr class='busNumber' id='1D'><td>1D</td></tr>
+					<tr class='busNumber' id='1DS'><td>1DS</td></tr>
+					<tr class='busNumber' id='1DV'><td>1DV</td></tr>
+					<tr class='busNumber' id='1P/251'><td>1P/251</td></tr>
+					<tr class='busNumber' id='1P/25I'><td>1P/25I</td></tr>
+					<tr class='busNumber' id='1P/25S'><td>1P/25S</td></tr>
+					<tr class='busNumber' id='1V'><td>1V</td></tr>
+					<tr class='busNumber' id='2C'><td>2C</td></tr>
+					<tr class='busNumber' id='2Z'><td>2Z</td></tr>
+					<tr class='busNumber' id='3'><td>3</td></tr>
+					<tr class='busNumber' id='3H'><td>3H</td></tr>
+					<tr class='busNumber' id='3HN'><td>3HN</td></tr>
+					<tr class='busNumber' id='3K'><td>3K</td></tr>
+					<tr class='busNumber' id='3KN'><td>3KN</td></tr>
+					<tr class='busNumber' id='5/229'><td>5/229</td></tr>
+					<tr class='busNumber' id='5D'><td>5D</td></tr>
+					<tr class='busNumber' id='5K'><td>5K</td></tr>
+					<tr class='busNumber' id='5K/251'><td>5K/251</td></tr>
+					<tr class='busNumber' id='5K/92'><td>5K/92</td></tr>
+					<tr class='busNumber' id='5M'><td>5M</td></tr>
+					<tr class='busNumber' id='5M/16M'><td>5M/16M</td></tr>
+					<tr class='busNumber' id='5R'><td>5R</td></tr>
+					<tr class='busNumber' id='5S'><td>5S</td></tr>
+					<tr class='busNumber' id='6H'><td>6H</td></tr>
+					<tr class='busNumber' id='8A'><td>8A</td></tr>
+					<tr class='busNumber' id='8C'><td>8C</td></tr>
+					<tr class='busNumber' id='8R'><td>8R</td></tr>
+					<tr class='busNumber' id='8R/25M'><td>8R/25M</td></tr>
+					<tr class='busNumber' id='8R/25S'><td>8R/25S</td></tr>
+					<tr class='busNumber' id='8X'><td>8X</td></tr>
+					<tr class='busNumber' id='9C'><td>9C</td></tr>
+					<tr class='busNumber' id='9K'><td>9K</td></tr>
+					<tr class='busNumber' id='9K/272'><td>9K/272</td></tr>
+					<tr class='busNumber' id='9M'><td>9M</td></tr>
+					<tr class='busNumber' id='9X'><td>9X</td></tr>
+					<tr class='busNumber' id='9X/230'><td>9X/230</td></tr>
+					<tr class='busNumber' id='9X/230X'><td>9X/230X</td></tr>
+					<tr class='busNumber' id='9YF'><td>9YF</td></tr>
+			    	<tr class='busNumber' id='10'><td>10</td></tr>
+					<tr class='busNumber' id='10/224'><td>10/224</td></tr>
+					<tr class='busNumber' id='10F'><td>10F</td></tr>
+					<tr class='busNumber' id='10H'><td>10H</td></tr>
+					<tr class='busNumber' id='10H/16'><td>10H/16</td></tr>
+					<tr class='busNumber' id='10H/16A'><td>10H/16A</td></tr>
+					<tr class='busNumber' id='10H/17H'><td>10H/17H</td></tr>
+					<tr class='busNumber' id='10H/219'><td>10H/219</td></tr>
+					<tr class='busNumber' id='10H/224'><td>10H/224</td></tr>
+					<tr class='busNumber' id='10H/25I'><td>10H/25I</td></tr>
+					<tr class='busNumber' id='10H/25S'><td>10H/25S</td></tr>
+					<tr class='busNumber' id='10H/A'><td>10H/A</td></tr>
+					<tr class='busNumber' id='10H/L'><td>10H/L</td></tr>
+					<tr class='busNumber' id='10H/U'><td>10H/U</td></tr>
+					<tr class='busNumber' id='10H/W'><td>10H/W</td></tr>
+					<tr class='busNumber' id='10K'><td>10K</td></tr>
+					<tr class='busNumber' id='10KH'><td>10KH</td></tr>
+					<tr class='busNumber' id='10KJ'><td>10KJ</td></tr>
+					<tr class='busNumber' id='10KM'><td>10KM</td></tr>
+					<tr class='busNumber' id='10L'><td>10L</td></tr>
+					<tr class='busNumber' id='10YF'><td>10YF</td></tr>
+					<tr class='busNumber' id='11W'><td>11W</td></tr>
+					<tr class='busNumber' id='12'><td>12</td></tr>
+					<tr class='busNumber' id='12RM'><td>12RM</td></tr>
+					<tr class='busNumber' id='16A'><td>16A</td></tr>
+					<tr class='busNumber' id='16A/10H'><td>16A/10H</td></tr>
+					<tr class='busNumber' id='16A/219'><td>16A/219</td></tr>
+					<tr class='busNumber' id='16A/47L'><td>16A/47L</td></tr>
+					<tr class='busNumber' id='16A/47V'><td>16A/47V</td></tr>
+					<tr class='busNumber' id='16A/49M'><td>16A/49M</td></tr>
+					<tr class='busNumber' id='16C/29R'><td>16C/29R</td></tr>
+					<tr class='busNumber' id='16H'><td>16H</td></tr>
+					<tr class='busNumber' id='16H/47L'><td>16H/47L</td></tr>
+					<tr class='busNumber' id='16H/47V'><td>16H/47V</td></tr>
+					<tr class='busNumber' id='16M'><td>16M</td></tr>
+					<tr class='busNumber' id='16M/5M'><td>16M/5M</td></tr>
+					<tr class='busNumber' id='17D'><td>17D</td></tr>
+					<tr class='busNumber' id='17H'><td>17H</td></tr>
+					<tr class='busNumber' id='17H/47LI'><td>17H/47LI</td></tr>
+					<tr class='busNumber' id='17H/49M'><td>17H/49M</td></tr>
+					<tr class='busNumber' id='17HN'><td>17HN</td></tr>
+					<tr class='busNumber' id='17HN/47LI'><td>17HN/47LI</td></tr>
+					<tr class='busNumber' id='17S'><td>17S</td></tr>
+					<tr class='busNumber' id='18/30'><td>18/30</td></tr>
+					<tr class='busNumber' id='18C'><td>18C</td></tr>
+					<tr class='busNumber' id='19/224'><td>19/224</td></tr>
+					<tr class='busNumber' id='19K'><td>19K</td></tr>
+					<tr class='busNumber' id='19K/224'><td>19K/224</td></tr>
+					<tr class='busNumber' id='19K/288'><td>19K/288</td></tr>
+					<tr class='busNumber' id='19M'><td>19M</td></tr>
+					<tr class='busNumber' id='19M/288'><td>19M/288</td></tr>
+					<tr class='busNumber' id='20P'><td>20P</td></tr>
+					<tr class='busNumber' id='20X/251'><td>20X/251</td></tr>
+					<tr class='busNumber' id='21/107J'><td>21/107J</td></tr>
+					<tr class='busNumber' id='21/107S'><td>21/107S</td></tr>
+					<tr class='busNumber' id='21W/107'><td>21W/107</td></tr>
+					<tr class='busNumber' id='21W/107J'><td>21W/107J</td></tr>
+					<tr class='busNumber' id='22/90L'><td>22/90L</td></tr>
+					<tr class='busNumber' id='23K'><td>23K</td></tr>
+					<tr class='busNumber' id='24B'><td>24B</td></tr>
+					<tr class='busNumber' id='25HA'><td>25HA</td></tr>
+					<tr class='busNumber' id='25S'><td>25S</td></tr>
+					<tr class='busNumber' id='29R'><td>29R</td></tr>
+					<tr class='busNumber' id='29R/272'><td>29R/272</td></tr>
+					<tr class='busNumber' id='30'><td>30</td></tr>
+					<tr class='busNumber' id='31X'><td>31X</td></tr>
+					<tr class='busNumber' id='38H'><td>38H</td></tr>
+					<tr class='busNumber' id='38S/47'><td>38S/47</td></tr>
+					<tr class='busNumber' id='38S/47V'><td>38S/47V</td></tr>
+					<tr class='busNumber' id='38X'><td>38X</td></tr>
+					<tr class='busNumber' id='38X/10'><td>38X/10</td></tr>
+					<tr class='busNumber' id='40'><td>40</td></tr>
+					<tr class='busNumber' id='45F'><td>45F</td></tr>
+					<tr class='busNumber' id='45H'><td>45H</td></tr>
+					<tr class='busNumber' id='45HA'><td>45HA</td></tr>
+					<tr class='busNumber' id='45K'><td>45K</td></tr>
+					<tr class='busNumber' id='45KM'><td>45KM</td></tr>
+					<tr class='busNumber' id='45KMG'><td>45KMG</td></tr>
+					<tr class='busNumber' id='45MF'><td>45MF</td></tr>
+					<tr class='busNumber' id='47'><td>47</td></tr>
+					<tr class='busNumber' id='47H/90L'><td>47H/90L</td></tr>
+					<tr class='busNumber' id='47L'><td>47L</td></tr>
+					<tr class='busNumber' id='47L/M'><td>47L/M</td></tr>
+					<tr class='busNumber' id='47LI'><td>47LI</td></tr>
+					<tr class='busNumber' id='47LI/90LF'><td>47LI/90LF</td></tr>
+					<tr class='busNumber' id='47V'><td>47V</td></tr>
+					<tr class='busNumber' id='47Y'><td>47Y</td></tr>
+					<tr class='busNumber' id='47Y/90D'><td>47Y/90D</td></tr>
+					<tr class='busNumber' id='47Y/F'><td>47Y/F</td></tr>
+					<tr class='busNumber' id='49A/251'><td>49A/251</td></tr>
+					<tr class='busNumber' id='49M'><td>49M</td></tr>
+					<tr class='busNumber' id='49M/16A'><td>49M/16A</td></tr>
+					<tr class='busNumber' id='49M/250'><td>49M/250</td></tr>
+					<tr class='busNumber' id='49M/251'><td>49M/251</td></tr>
+					<tr class='busNumber' id='49Z'><td>49Z</td></tr>
+					<tr class='busNumber' id='83 J'><td>83 J</td></tr>
+					<tr class='busNumber' id='83J'><td>83J</td></tr>
+					<tr class='busNumber' id='85U'><td>85U</td></tr>
+					<tr class='busNumber' id='90D'><td>90D</td></tr>
+					<tr class='busNumber' id='90DS'><td>90DS</td></tr>
+					<tr class='busNumber' id='90L'><td>90L</td></tr>
+					<tr class='busNumber' id='90L/229'><td>90L/229</td></tr>
+					<tr class='busNumber' id='90L/251'><td>90L/251</td></tr>
+					<tr class='busNumber' id='90L/25S'><td>90L/25S</td></tr>
+					<tr class='busNumber' id='90L/300'><td>90L/300</td></tr>
+					<tr class='busNumber' id='90L/47L'><td>90L/47L</td></tr>
+					<tr class='busNumber' id='92X'><td>92X</td></tr>
+					<tr class='busNumber' id='94H'><td>94H</td></tr>
+					<tr class='busNumber' id='94HX'><td>94HX</td></tr>
+					<tr class='busNumber' id='94KO'><td>94KO</td></tr>
+					<tr class='busNumber' id='95K'><td>95K</td></tr>
+					<tr class='busNumber' id='96L'><td>96L</td></tr>
+					<tr class='busNumber' id='100DV'><td>100DV</td></tr>
+					<tr class='busNumber' id='102'><td>102</td></tr>
+					<tr class='busNumber' id='102B'><td>102B</td></tr>
+					<tr class='busNumber' id='102C'><td>102C</td></tr>
+					<tr class='busNumber' id='102D'><td>102D</td></tr>
+					<tr class='busNumber' id='102F'><td>102F</td></tr>
+					<tr class='busNumber' id='102FN'><td>102FN</td></tr>
+					<tr class='busNumber' id='102K'><td>102K</td></tr>
+					<tr class='busNumber' id='102KD'><td>102KD</td></tr>
+					<tr class='busNumber' id='102KS'><td>102KS</td></tr>
+					<tr class='busNumber' id='102L'><td>102L</td></tr>
+					<tr class='busNumber' id='102MD'><td>102MD</td></tr>
+					<tr class='busNumber' id='102X'><td>102X</td></tr>
+					<tr class='busNumber' id='107'><td>107</td></tr>
+					<tr class='busNumber' id='107J/P'><td>107J/P</td></tr>
+					<tr class='busNumber' id='107V/P'><td>107V/P</td></tr>
+					<tr class='busNumber' id='107VR'><td>107VR</td></tr>
+					<tr class='busNumber' id='113/216'><td>113/216</td></tr>
+					<tr class='busNumber' id='113/288'><td>113/288</td></tr>
+					<tr class='busNumber' id='113A'><td>113A</td></tr>
+					<tr class='busNumber' id='113A/280'><td>113A/280</td></tr>
+					<tr class='busNumber' id='113E'><td>113E</td></tr>
+					<tr class='busNumber' id='113E/L'><td>113E/L</td></tr>
+					<tr class='busNumber' id='113I/K'><td>113I/K</td></tr>
+					<tr class='busNumber' id='113I/M'><td>113I/M</td></tr>
+					<tr class='busNumber' id='113I/M/216'><td>113I/M/216</td></tr>
+					<tr class='busNumber' id='113IM/216'><td>113IM/216</td></tr>
+					<tr class='busNumber' id='113IMU/216'><td>113IMU/216</td></tr>
+					<tr class='busNumber' id='113IY/K'><td>113IY/K</td></tr>
+					<tr class='busNumber' id='113J'><td>113J</td></tr>
+					<tr class='busNumber' id='113K'><td>113K</td></tr>
+					<tr class='busNumber' id='113K I/KP'><td>113K I/KP</td></tr>
+					<tr class='busNumber' id='113K Y/F'><td>113K Y/F</td></tr>
+					<tr class='busNumber' id='113K/225'><td>113K/225</td></tr>
+					<tr class='busNumber' id='113K/255L'><td>113K/255L</td></tr>
+					<tr class='busNumber' id='113K/L'><td>113K/L</td></tr>
+					<tr class='busNumber' id='113K/Y'><td>113K/Y</td></tr>
+					<tr class='busNumber' id='113KYH'><td>113KYH</td></tr>
+					<tr class='busNumber' id='113M'><td>113M</td></tr>
+					<tr class='busNumber' id='113VB'><td>113VB</td></tr>
+					<tr class='busNumber' id='113Y/F'><td>113Y/F</td></tr>
+					<tr class='busNumber' id='113Y/K'><td>113Y/K</td></tr>
+					<tr class='busNumber' id='113YF'><td>113YF</td></tr>
+					<tr class='busNumber' id='113YK'><td>113YK</td></tr>
+					<tr class='busNumber' id='115'><td>115</td></tr>
+					<tr class='busNumber' id='118 X'><td>118 X</td></tr>
+					<tr class='busNumber' id='118W'><td>118W</td></tr>
+					<tr class='busNumber' id='118WQ'><td>118WQ</td></tr>
+					<tr class='busNumber' id='1202K'><td>1202K</td></tr>
+					<tr class='busNumber' id='126/300'><td>126/300</td></tr>
+					<tr class='busNumber' id='126M'><td>126M</td></tr>
+					<tr class='busNumber' id='127J/222'><td>127J/222</td></tr>
+					<tr class='busNumber' id='127JK'><td>127JK</td></tr>
+					<tr class='busNumber' id='127K'><td>127K</td></tr>
+					<tr class='busNumber' id='127K/222'><td>127K/222</td></tr>
+					<tr class='busNumber' id='127KA'><td>127KA</td></tr>
+					<tr class='busNumber' id='127KD'><td>127KD</td></tr>
+					<tr class='busNumber' id='127KH'><td>127KH</td></tr>
+					<tr class='busNumber' id='127KL'><td>127KL</td></tr>
+					<tr class='busNumber' id='127KV'><td>127KV</td></tr>
+					<tr class='busNumber' id='127VB'><td>127VB</td></tr>
+					<tr class='busNumber' id='136H'><td>136H</td></tr>
+					<tr class='busNumber' id='147'><td>147</td></tr>
+					<tr class='busNumber' id='156/118'><td>156/118</td></tr>
+					<tr class='busNumber' id='156/204'><td>156/204</td></tr>
+					<tr class='busNumber' id='156/288'><td>156/288</td></tr>
+					<tr class='busNumber' id='156/299'><td>156/299</td></tr>
+					<tr class='busNumber' id='156L'><td>156L</td></tr>
+					<tr class='busNumber' id='156V'><td>156V</td></tr>
+					<tr class='busNumber' id='156V/118'><td>156V/118</td></tr>
+					<tr class='busNumber' id='158'><td>158</td></tr>
+					<tr class='busNumber' id='158/272G'><td>158/272G</td></tr>
+					<tr class='busNumber' id='158D/L'><td>158D/L</td></tr>
+					<tr class='busNumber' id='158FB'><td>158FB</td></tr>
+					<tr class='busNumber' id='158FV'><td>158FV</td></tr>
+					<tr class='busNumber' id='158J/L'><td>158J/L</td></tr>
+					<tr class='busNumber' id='158VJ'><td>158VJ</td></tr>
+					<tr class='busNumber' id='171'><td>171</td></tr>
+					<tr class='busNumber' id='171M'><td>171M</td></tr>
+					<tr class='busNumber' id='186'><td>186</td></tr>
+					<tr class='busNumber' id='186/224'><td>186/224</td></tr>
+					<tr class='busNumber' id='187'><td>187</td></tr>
+					<tr class='busNumber' id='187D'><td>187D</td></tr>
+					<tr class='busNumber' id='187D/L'><td>187D/L</td></tr>
+					<tr class='busNumber' id='187DL'><td>187DL</td></tr>
+					<tr class='busNumber' id='187DM'><td>187DM</td></tr>
+					<tr class='busNumber' id='187DV'><td>187DV</td></tr>
+					<tr class='busNumber' id='187LB'><td>187LB</td></tr>
+					<tr class='busNumber' id='188'><td>188</td></tr>
+					<tr class='busNumber' id='189'><td>189</td></tr>
+					<tr class='busNumber' id='189M'><td>189M</td></tr>
+					<tr class='busNumber' id='189MA'><td>189MA</td></tr>
+					<tr class='busNumber' id='190R'><td>190R</td></tr>
+					<tr class='busNumber' id='190RK'><td>190RK</td></tr>
+					<tr class='busNumber' id='201KH'><td>201KH</td></tr>
+					<tr class='busNumber' id='216/113M'><td>216/113M</td></tr>
+					<tr class='busNumber' id='216D'><td>216D</td></tr>
+					<tr class='busNumber' id='216H'><td>216H</td></tr>
+					<tr class='busNumber' id='216L'><td>216L</td></tr>
+					<tr class='busNumber' id='216L/W'><td>216L/W</td></tr>
+					<tr class='busNumber' id='216M'><td>216M</td></tr>
+					<tr class='busNumber' id='217'><td>217</td></tr>
+					<tr class='busNumber' id='217A'><td>217A</td></tr>
+					<tr class='busNumber' id='217AD'><td>217AD</td></tr>
+					<tr class='busNumber' id='217D'><td>217D</td></tr>
+					<tr class='busNumber' id='217D/A'><td>217D/A</td></tr>
+					<tr class='busNumber' id='217D/L'><td>217D/L</td></tr>
+					<tr class='busNumber' id='218'><td>218</td></tr>
+					<tr class='busNumber' id='218/224'><td>218/224</td></tr>
+					<tr class='busNumber' id='218BL'><td>218BL</td></tr>
+					<tr class='busNumber' id='218C'><td>218C</td></tr>
+					<tr class='busNumber' id='218D'><td>218D</td></tr>
+					<tr class='busNumber' id='218DV'><td>218DV</td></tr>
+					<tr class='busNumber' id='218H'><td>218H</td></tr>
+					<tr class='busNumber' id='218KL'><td>218KL</td></tr>
+					<tr class='busNumber' id='218L'><td>218L</td></tr>
+					<tr class='busNumber' id='218M'><td>218M</td></tr>
+					<tr class='busNumber' id='218MD'><td>218MD</td></tr>
+					<tr class='busNumber' id='219'><td>219</td></tr>
+					<tr class='busNumber' id='219/229'><td>219/229</td></tr>
+					<tr class='busNumber' id='222A'><td>222A</td></tr>
+					<tr class='busNumber' id='224'><td>224</td></tr>
+					<tr class='busNumber' id='224/226'><td>224/226</td></tr>
+					<tr class='busNumber' id='224G'><td>224G</td></tr>
+					<tr class='busNumber' id='225C'><td>225C</td></tr>
+					<tr class='busNumber' id='225L'><td>225L</td></tr>
+					<tr class='busNumber' id='225L/299'><td>225L/299</td></tr>
+					<tr class='busNumber' id='225LV'><td>225LV</td></tr>
+					<tr class='busNumber' id='225V/L'><td>225V/L</td></tr>
+					<tr class='busNumber' id='226'><td>226</td></tr>
+					<tr class='busNumber' id='226L/229'><td>226L/229</td></tr>
+					<tr class='busNumber' id='229'><td>229</td></tr>
+					<tr class='busNumber' id='230D/189'><td>230D/189</td></tr>
+					<tr class='busNumber' id='230X'><td>230X</td></tr>
+					<tr class='busNumber' id='250C'><td>250C</td></tr>
+					<tr class='busNumber' id='250E'><td>250E</td></tr>
+					<tr class='busNumber' id='251X'><td>251X</td></tr>
+					<tr class='busNumber' id='252'><td>252</td></tr>
+					<tr class='busNumber' id='253M'><td>253M</td></tr>
+					<tr class='busNumber' id='277'><td>277</td></tr>
+					<tr class='busNumber' id='279'><td>279</td></tr>
+					<tr class='busNumber' id='281'><td>281</td></tr>
+					<tr class='busNumber' id='288D'><td>288D</td></tr>
+					<tr class='busNumber' id='290'><td>290</td></tr>
+					<tr class='busNumber' id='299D'><td>299D</td></tr>
+					<tr class='busNumber' id='299M'><td>299M</td></tr>
+					<tr class='busNumber' id='300'><td>300</td></tr>
+					<tr class='busNumber' id='589'><td>589</td></tr>
+					<tr class='busNumber' id='CHEVELLA'><td id='CHEVELLA1'></td></tr>
+
+			    </tbody>
+			</table>
+		</div>
+	  	<div style="padding-bottom:40px;"></div>		
+	</div>	
+
+	<div id="map-canvas" style="display: none; padding-bottom: 60px; padding-top: 45px;"></div>
+	
+	<div id='stopDetails' style="display: none; padding-bottom: 70px; padding-top:45px;"></div> 		
+		
+	<div id="myModal" class="modal fade">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	                <h4 class="modal-title"><span id="stopInfo" style='color: #ffc4f4;'></span></h4>
+	            </div>
+	            <div class="modal-body" id="tableData"></div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-default" data-dismiss="modal" id="close"></button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+	<div style="background: url(images/m.jpg);" >
+		<nav id="navFooter" class="navbar-fixed-bottom" role="navigation" style="border-top: 3px solid #345678; background: url(images/m.jpg); float: left;" >
+			<ul class="pager" style="float: left; margin: 8px 0px 10px;">
+			  	<li><a href="index.html" ><span class="glyphicon glyphicon-home btn-custom" id="home">&nbsp;Home</span></a></li>
+			</ul>
+		</nav>
+	</div>
+
+	<script src="js/cordova.js"></script>
+	<script src="js/UrlPlugin.js"> </script>
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script type="text/javascript" src="js/bootstrap.min.js"></script>
+	<script src="js/resources.default.js"> </script>
+	<script src="js/resources.en.js"> </script>
+	
+	<script>
+	var languageCode;
+	var globalURL;
+	var startid;
+	var endid;
+	var backButtonLevel = 1;
+
+	$(document).ready(function() {
+	
+		$(window).scroll(function(){
+			if ($(this).scrollTop() > 100) {
+				$('.scrollup').fadeIn();
+			} else {
+				$('.scrollup').fadeOut();
+			}
+		}); 
+		
+		$('.scrollup').click(function(){
+			$("html, body").animate({ scrollTop: 0 }, 600);
+			return false;
+		}); 
+	
+		console.log("doc ready");
+		$(window).load(function() {
+			$(".loader").fadeOut("slow");
+		});
+	
+		$('#filter').focus(function () {
+			$("#navHeader").slideToggle("slow");
+			$("#navFooter").slideToggle("slow");
+			document.getElementById("stopsPanel").style.marginTop = "-20px";
+		});
+		
+		$('#filter').blur(function () {
+			$("#navHeader").slideToggle("slow");
+			$("#navFooter").slideToggle("slow");
+			document.getElementById("stopsPanel").style.marginTop = "65px";
+		});
+		
+		$('#filter').keyup(function () {
+			var localLanguageCode = localStorage["languageCode"];
+			var thisValue = $(this).val();
+			if(thisValue != null) {
+				thisValue = thisValue.toLowerCase();
+			}
+			//alert("thisValue::"+thisValue+":");
+            var rex = new RegExp(thisValue);
+            
+            $('.searchable tr').hide();
+            $('.searchable tr').filter(function () {
+                var textVal = $(this).text().trim().toLowerCase();
+                if(localLanguageCode == "2") {                
+	                switch(textVal) {
+				        case 'चेवेल्ला' : textVal = "chevella"; break;
+	                }
+                } else if(localLanguageCode == "3") {
+	                switch(textVal) {
+						 case'చేవెళ్ల'  : textVal = "chevella"; break;						
+	                }
+				}        
+                return rex.test(textVal);
+            }).show();
+        });
+		
+		$("#stopsList").on('click', '.busNumber', function(e) {
+		    	
+			e.preventDefault();
+            var textVal = $(this).text().trim();
+			var ids = $(this).attr('id');
+          //  alert('selected ids : '+ids);
+          //  alert('selected Route : '+textVal);
+            $('.scrollup').fadeOut();
+
+			var flag = true;
+			flag = 	checkConnection();
+			
+			if(flag == false) {
+				navigator.notification.alert(
+				    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+				    closeActivity,         				// callback
+				    'No network connection',            // title
+				    'OK'                  				// buttonName
+				);
+			} else {
+	        	if(textVal != null) {
+		            $.ajax({
+		            	type: "GET", 
+		                url: globalURL+'query='+ids+',0,67&flag=8',
+		                beforeSend: function () { 
+		                	$(".ajaxloader").show();
+		                },
+		        		complete: function () { 
+		        			$(".ajaxloader").hide();
+		        			backButtonLevel = 2; 
+		        		},
+		                success: function(showdata) { 
+	
+	   						$('#map-canvas').html("");
+						    $("#map-canvas").show();
+						    $("#stopDetails").html(""); 
+						    $("#stopDetails").hide(); 
+	    					$("#stopsPanel").hide();
+	    					
+	    					if(showdata != null && showdata != 'undefined' && showdata.indexOf("No records") != -1) {
+	    						$('#map-canvas').append(MyApp.resources.norecords);	
+	    					} else {
+		    					var sendingdate = showdata.split(";");
+		    					var routeArray = [];
+		    					//alert("sendingdate : "+sendingdate);
+		    					var details = '<div id="srcRouteId" style="margin-bottom: 55px;"><ul class="stopsPanel"><ul class="pager"><li style="float: right;"><a><span class="glyphicon glyphicon-arrow-left btn-custom" id="showback">&nbsp;'+MyApp.resources.back+'</span></a></li></ul><center><h4>'+MyApp.resources.availableroutes+' '+textVal+'</h4></center>';
+		    					for (var i in sendingdate) {
+		    						var kk = sendingdate[i];
+		    						var id = sendingdate[i].split(',')[0];
+		    						console.log("sendingdate[i].split(',')[1] : "+sendingdate[i].split(',')[1]);
+		    						var routeDetails = sendingdate[i].split(',')[1].toLowerCase();
+		    						var routeContent = routeDetails;
+		    						routeArray = routeDetails.split(" to ");
+		    						if(routeArray != null && routeArray.length > 1) {
+		    							routeContent = convertDataToLocalValue(routeArray[0]) +" TO "+ convertDataToLocalValue(routeArray[1]);
+		    						} else {
+		    							routeContent = convertDataToLocalValue(routeArray[0]);
+		    						}
+		    						details += '<li><a href="#" id='+id+' class="findstops" style="padding-left: 5px;">'+routeContent+'</a></li>';
+		    						i++;
+		    					}
+		    					details += '</ul></div>';
+		    					$('#map-canvas').append(details); 	
+		    					
+		    					$("#showback").click(function() {
+						    		$("#stopsPanel").show();
+						    		$("#map-canvas").hide(); 
+								});
+	    					}
+	    				},                                         
+		          		error: function (xhr, status) {  
+		          		}
+		            });    			
+	        	}
+	        }
+	    });
+
+		$('#map-canvas').on('click', '.findstops', function(e) {
+		    $('#stopDetails').html("");
+			e.preventDefault();
+			var id = $(this).attr('id');
+			var stopsnearme = $(this).text();
+			var flag = true;
+			flag = 	checkConnection();
+			
+			if(flag == false) {
+				navigator.notification.alert(
+				    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+				    closeActivity,         				// callback
+				    'No network connection',            // title
+				    'OK'                  				// buttonName
+				);
+			} else {
+	            $.ajax({
+	            	type: "GET", 
+	                url: globalURL+"query="+id+",0,67&flag=4",
+	                beforeSend: function () { 
+						$("#map-canvas").css("display","none");
+						$("#stopDetails").css("display","block");
+						
+	                	$(".ajaxloader").show();
+	                },
+	        		complete: function () { 
+	        			$(".ajaxloader").hide();
+	        			backButtonLevel = 3; 
+	        		},
+	                success: function(showdata) { 
+				
+						var sendingdate = showdata.split(";");
+						var details = '<div id="stopsRouteId"><ul class="stopDetails"><ul class="pager"><li style="float: right;"><a><span class="glyphicon glyphicon-arrow-left btn-custom" id="show">&nbsp;'+MyApp.resources.back+'</span></a></li></ul><center><h4>'+MyApp.resources.stopsintheselectedroute+' '+stopsnearme+'</h4></center>';
+						var count = sendingdate.length;
+						
+						for (var i in sendingdate) {
+							var kk = sendingdate[i];
+							var ids = sendingdate[i].split(',')[0];
+							var routeid = sendingdate[i].split(',')[4];
+							var locationData = sendingdate[i].split(',')[1]+","+sendingdate[i].split(',')[2];
+							details += '<li id="lid"><a href="#" stopid='+ids+' routedid='+routeid+' latlong = '+locationData+' class="getStop" style="text-align: center;">'+convertDataToLocalValue(sendingdate[i].split(',')[3])+'</a></li>';
+							i++;
+							if(i < count) {
+								details += '<center>&#9660</center>';
+							}						
+						}
+						details += '</ul></div>';
+					    $('#stopDetails').html("");
+					    $("#stopDetails").show();
+						$('#stopDetails').append(details);					
+						
+						$("#map-canvas").css("display","none");
+						$("#stopDetails").css("display","block");
+						
+						$("#show").click(function() {
+						    $("#map-canvas").show();
+						    $("#stopDetails").hide(); 
+						});
+					},
+	          		error: function (xhr, status) {  
+	          		}
+	            });
+			}
+		});
+	
+		$('#stopDetails').on('click', '.getStop', function(e) {
+			    
+			e.preventDefault();
+			var stopid = $(this).attr('stopid');
+			var routeid = $(this).attr('routedid');
+			var stopdetailsshow = $(this).text();
+			var flag = true;
+			flag = 	checkConnection();
+			
+			if(flag == false) {
+				navigator.notification.alert(
+				    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+				    closeActivity,         				// callback
+				    'No network connection',            // title
+				    'OK'                  				// buttonName
+				);
+			} else {
+	            $.ajax({
+	            	type: "GET", 
+	                url: globalURL+"query="+routeid+","+stopid+",0,67&flag=5",
+	                beforeSend: function () { 
+	                	$(".ajaxloader").show();
+	                },
+	        		complete: function () { 
+	        			$(".ajaxloader").hide(); 
+	        		},
+	                success: function(showdata) { 
+						var sendingdate = showdata.split(";");
+						var details = '<ul class="routestopDetails">';
+						for (var i in sendingdate) {
+							var kk = sendingdate[i];
+							var busregno = sendingdate[i].split(',')[0];							
+							var routeno = sendingdate[i].split(',')[1];							
+							var destination = sendingdate[i].split(',')[2];							
+							var eta = sendingdate[i].split(',')[3];
+							
+							details += "<div class='table' style='border-radius: 0.46em'><table class='table table-striped table-bordered' align='center'><tr><td style='background-color: #ffc4f4;'>"+MyApp.resources.busStop+"</td><td style='background-color: #ffc4f4;'>"+sendingdate[i].split(',')[0]+"</td></tr><tr><td>"+MyApp.resources.route+"</td><td>"+sendingdate[i].split(',')[1]+"</td></tr><tr><td>"+MyApp.resources.destination+"</td><td>"+convertDataToLocalValue(sendingdate[i].split(',')[2])+"</td></tr><tr><td>"+MyApp.resources.Time+"</td><td>"+sendingdate[i].split(',')[3]+"</td></tr></table></div>";
+							i++;
+						}
+						
+						details += '</ul>';
+						if(showdata != null && showdata != 'undefined' && showdata.indexOf("No records") != -1) {
+							$('#tableData').html(MyApp.resources.norecords);
+						} else {
+							$('#tableData').html(details);
+						}
+						document.getElementById('stopInfo').innerHTML = MyApp.resources.routedetails + " : " + stopdetailsshow;
+		    			$("#myModal").modal('show');
+	          		}, 
+	          		error: function (xhr, status) {  
+	          		}
+	            });
+	    	}            
+		});
+
+		languageCode = localStorage["languageCode"];
+		if(languageCode == "1") {
+	   		includeJS("js/resources.en.js");
+	    	$.extend(MyApp.resources, localizedResources);
+		} else if(languageCode == "2") {
+	   		includeJS("js/resources.hi.js");
+	    	$.extend(MyApp.resources, localizedResources);
+	    } else if(languageCode == "3") {
+	   		includeJS("js/resources.te.js");
+	    	$.extend(MyApp.resources, localizedResources);
+		}
+		
+    	document.getElementById('availableStops').innerHTML = MyApp.resources.busNumber+' &nbsp;<i class="glyphicon glyphicon-filter"></i>';    
+    	document.getElementById('stopInfo').innerHTML = MyApp.resources.routedetails;	    	  
+		document.getElementById('home').innerHTML = "&nbsp;"+MyApp.resources.home;   
+		document.getElementById('close').innerHTML = MyApp.resources.close;
+		document.getElementById('CHEVELLA1').innerHTML = MyApp.resources.chevella;
+		$('#filter').attr('placeholder', MyApp.resources.typeHere);
+   	});
+
+	document.addEventListener("deviceready", onDeviceReady, false);
+	
+	function onDeviceReady() {
+		console.log("onDeviceReady");
+		UrlPlugin.prototype.send( function (result) { 
+			globalURL = result;
+		}, function (e) {
+			alert('Message Failed:' + e);
+		});
+		document.addEventListener("backbutton", doBack, false);
+		var flag = true;
+		flag = 	checkConnection();
+		
+		if(flag == false) {
+			navigator.notification.alert(
+			    'Cannot connect to Internet. \nPlease check you connection settings and try again',  // message
+			    closeActivity,         				// callback
+			    'No network connection',            // title
+			    'OK'                  				// buttonName
+			);
+		} else {
+			document.getElementsByTagName("body")[0].style.display = "block";
+		}
+	}
+	
+	function closeActivity() {
+		navigator.app.exitApp();
+	}
+
+	function doBack() {
+        switch(backButtonLevel) {
+	        case 1 : document.location = "index.html"; break;
+	        case 2 : $("#stopsPanel").show(); $("#map-canvas").hide(); backButtonLevel = 1; break;
+	        case 3 : $("#map-canvas").show(); $("#stopDetails").hide(); backButtonLevel = 2; break;
+	        default  : break;
+		}
+	}
+	
+	function checkConnection() {
+	    var networkState = navigator.network.connection.type;
+	    var booldata = true;
+	
+	    if(networkState == Connection.NONE || networkState == Connection.UNKNOWN) {
+	    	booldata = false;
+	    }
+	    return booldata;
+	}
+
+	function includeJS(jsFile) {
+	    $('head').append($('<script>').attr('type', 'text/javascript').attr('src', jsFile));
+	}
+
+</script>
+	
+</body>
+</html>
